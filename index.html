@@ -33,13 +33,32 @@
             padding: 100px 20px 60px;
             max-width: 800px;
             animation: fadeIn 1.5s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centers everything */
+        }
+
+        .title-container {
+            display: flex;
+            align-items: center; /* Aligns image and text vertically */
+            gap: 20px; /* Space between logo and text */
+            margin-bottom: 15px;
+        }
+
+        .logo-img {
+            width: 150px; /* Adjust size as needed */
+            height: auto;
+            border-radius: 50%; /* Makes it circular (optional) */
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.39); /*Optional glow */
         }
 
         h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin: 0 0 15px 0;
-            letter-spacing: -0.05em;
+            font-size: 3.5rem;
+            margin: 0 0 10px 0;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #d8d8d8 0%, #737373 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         p.subtitle {
@@ -130,7 +149,7 @@
         footer {
             margin-top: auto;
             padding: 50px;
-            color: #333;
+            color: #585858;
             font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
@@ -140,12 +159,17 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Ssamjjang's Archive</h1>
+        <div class="title-container">
+            <img src="assets/ssamjjang.png" alt="Ssamjjang Logo" class="logo-img">
+            
+            <h1>Ssamjjang's Archive</h1>
+        </div>
         <p class="subtitle">Digital madness and footprints cooked by SsamJjang</p>
     </header>
 
@@ -163,7 +187,7 @@
         const projectList = [
             {
                 title: "10x Dev Olympics",
-                desc: "sudo run simulation",
+                desc: "Optimize Workflow // Destroy Keyboard",
                 icon: "💻",
                 folder: "developer_olympics",
                 
