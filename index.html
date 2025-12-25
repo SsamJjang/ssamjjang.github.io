@@ -3,1027 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>10x Developer Olympics v7.1</title>
+    <title>Ssamjjang's Archives</title>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5235937512634331"
      crossorigin="anonymous"></script>
-
-    <ins class="adsbygoogle"
-       style="display:block"
-       data-ad-client="ca-pub-5235937512634331"
-       data-ad-slot="1234567890"
-       data-ad-format="auto"
-       data-full-width-responsive="true"></ins>
-
-  <script>
-    (adsbygoogle = window.adsbygoogle || []).push({});
-  </script>
-   
     <style>
         :root {
-            --bg-color: #0d0d0d;
-            --text-color: #00ff41;
-            --accent-color: #ff00ff;
-            --fail-color: #ff3333;
-            --warn-color: #ffcc00;
-            --font-main: 'Courier New', Courier, monospace;
+            /* SERIOUS THEME VARIABLES */
+            --bg-color: #0a0a0a;
+            --text-main: #ffffff;
+            --text-sub: #888888;
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: var(--font-main);
             margin: 0;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-        }
-
-        /* CRT Scanline Effect */
-        body::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-            z-index: 99;
-        }
-
-        .lb-nav {
-            display: flex;
-            justify-content: space-between;
-            gap: 5px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-        }
-
-        .nav-btn {
-            background: transparent;
-            border: 1px solid #555;
-            color: #888;
-            padding: 5px 10px;
-            cursor: pointer;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             font-family: var(--font-main);
-            font-size: 0.8rem;
-            flex-grow: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .nav-btn:hover {
-            border-color: var(--text-color);
-            color: #fff;
-        }
-
-        #game-wrapper {
-            width: 800px;
+        /* --- SERIOUS HEADER --- */
+        header {
             text-align: center;
+            padding: 100px 20px 60px;
+            max-width: 800px;
+            animation: fadeIn 1.5s ease;
         }
 
-        h1 { font-size: 3rem; text-shadow: 0 0 15px var(--text-color); margin-bottom: 10px; }
-        .subtitle { color: #888; margin-bottom: 30px; font-size: 1rem; }
-
-        .game-panel {
-            background: rgba(20, 20, 20, 0.95);
-            border: 2px solid var(--text-color);
-            border-radius: 10px;
-            padding: 40px;
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
-            min-height: 400px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden; 
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0 0 15px 0;
+            letter-spacing: -0.05em;
         }
 
-        /* --- COUNTDOWN OVERLAY --- */
-        #countdown-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            z-index: 60;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        #countdown-text {
-            font-size: 8rem;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 0 0 20px #fff;
-            animation: pop 0.2s ease-out;
+        p.subtitle {
+            color: var(--text-sub);
+            font-size: 1rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin: 0;
         }
 
-        @keyframes pop { 0% { transform: scale(0.5); opacity:0; } 80% { transform: scale(1.2); } 100% { transform: scale(1); opacity:1; } }
-
-        /* --- TUTORIAL OVERLAY --- */
-        #tutorial-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 10, 0.98);
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-radius: 10px;
-            padding: 40px;
+        /* --- GRID LAYOUT --- */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
             box-sizing: border-box;
         }
-        
-        #tutorial-title { font-size: 2.5rem; color: var(--warn-color); margin-bottom: 20px; text-transform: uppercase; }
-        
-        #tutorial-desc { 
-            font-size: 1rem; 
-            color: #fff; 
-            line-height: 1.5; 
-            max-width: 700px; 
-            margin-bottom: 30px; 
-            max-height: 250px; 
-            overflow-y: auto; 
-            padding-right: 10px;
+
+        /* --- GOOFY CARD LOGIC --- */
+        .card {
+            /* Default styling (neutral) */
+            background: #1c1c1c;
+            color: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-decoration: none;
+            
+            /* Layout */
+            height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            
+            /* THE BOUNCY ANIMATION (The "Goofy" part) */
+            /* This bezier curve creates a spring/elastic effect */
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #333;
         }
 
-        #tutorial-desc::-webkit-scrollbar { width: 8px; }
-        #tutorial-desc::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        
-        .key-hint { background: #333; padding: 2px 6px; border-radius: 4px; font-family: monospace; border: 1px solid #666; color: #fff; font-weight: bold; font-size: 0.9em; }
+        /* Hover State: Big scale + Slight Rotation + Shadow */
+        .card:hover {
+            transform: scale(1.05) rotate(-1deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
 
-        .rank-grid { display: grid; grid-template-columns: 1fr 1fr; text-align: left; gap: 5px; font-size: 0.85rem; background: #111; padding: 15px; border: 1px solid #333; margin-top: 15px; }
+        /* Even goofier: Every even child rotates the other way */
+        .card:nth-child(even):hover {
+            transform: scale(1.05) rotate(1deg);
+        }
 
-        /* --- MENU --- */
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        .card:active {
+            transform: scale(0.95);
+        }
 
-        .menu-btn {
-            background: transparent;
-            border: 1px solid var(--text-color);
-            color: var(--text-color);
-            padding: 20px;
-            font-family: var(--font-main);
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.2s;
+        .card-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .card-icon {
+            transform: scale(1.2);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            margin-top: auto;
+            padding: 50px;
+            color: #333;
+            font-size: 0.8rem;
             text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
 
-        .menu-btn:hover { background: var(--text-color); color: var(--bg-color); box-shadow: 0 0 15px var(--text-color); transform: scale(1.02); }
-        
-        .share-btn {
-            margin-top: 20px;
-            border-color: var(--accent-color); /* Optional: Makes it Pink to stand out */
-            color: var(--accent-color);        /* Optional: Makes text Pink */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        #leaderboard-modal, #submit-modal {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 100;
-            display: flex; justify-content: center; align-items: center;
-        }
-
-        .modal-content {
-            background: #111; border: 2px solid var(--text-color);
-            padding: 30px; text-align: center; border-radius: 10px;
-            box-shadow: 0 0 20px var(--text-color); width: 400px;
-        }
-
-        #lb-list {
-            margin: 20px 0; text-align: left; font-family: monospace;
-            max-height: 300px; overflow-y: auto;
-        }
-
-        .lb-row {
-            display: flex; justify-content: space-between;
-            padding: 5px 0; border-bottom: 1px solid #333;
-        }
-
-        #player-name {
-            background: #222; border: 1px solid #555; color: #fff;
-            padding: 10px; font-size: 1.2rem; margin-bottom: 20px;
-            text-align: center; width: 80%; font-family: var(--font-main);
-        }
-
-        /* --- GAME UI --- */
-        .hidden { display: none !important; }
-        .big-text { font-size: 2.5rem; margin: 20px 0; font-weight: bold; min-height: 60px; }
-        .timer { font-size: 3rem; color: #fff; margin-bottom: 20px; text-shadow: 0 0 10px #fff; }
-        
-        .key-box { display: inline-block; border: 2px solid #555; padding: 10px 15px; margin: 5px; border-radius: 5px; color: #555; font-size: 1.5rem; font-weight: bold; }
-        .key-box.active { border-color: var(--text-color); color: var(--text-color); box-shadow: 0 0 10px var(--text-color); transform: scale(1.1); }
-        .key-box.done { border-color: var(--accent-color); color: var(--accent-color); text-decoration: line-through; opacity: 0.5; }
-
-        .sudo-input { font-size: 2rem; color: var(--fail-color); margin-top: 20px; min-height: 40px; }
-        
-        .binary-stream { font-size: 2.5rem; letter-spacing: 10px; font-weight: bold; word-break: break-all; max-width: 600px; }
-        .binary-char { color: #555; transition: color 0.1s; }
-        .binary-char.current { color: #fff; text-shadow: 0 0 10px #fff; border-bottom: 2px solid var(--text-color); }
-        .binary-char.done { color: var(--text-color); opacity: 0.3; }
-
-        .vim-mode { background-color: #1d1d1d; color: #ccc; border: none; }
-        .vim-goal { font-size: 2rem; color: var(--warn-color); font-weight: bold; text-align: center; margin-bottom: 10px;}
-        .vim-user-input { position: absolute; bottom: 20px; left: 20px; font-weight: bold; font-size: 1.2rem; color: #fff; }
-
-        .back-hint { position: absolute; bottom: 10px; right: 15px; font-size: 0.8rem; color: #555; }
-        .rank-display { font-size: 2rem; color: var(--accent-color); margin-top: 15px; font-weight: bold; text-shadow: 0 0 10px var(--accent-color); min-height: 40px; }
-
-        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
-        .shake { animation: shake 0.3s; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
-
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <div id="game-wrapper">
-        <h1>10x DEVELOPER</h1>
-        <div class="subtitle">Optimize Workflow // Destroy Keyboard</div>
+    <header>
+        <h1>Ssamjjang's Archive</h1>
+        <p class="subtitle">Digital madness and footprints cooked by SsamJjang</p>
+    </header>
 
-        <div id="main-menu" class="game-panel">
-            <div class="menu-grid">
-                <button class="menu-btn" onclick="prepGame('reflex')">1. Copy/Paste Chaos</button>
-                <button class="menu-btn" onclick="prepGame('combo')">2. The "Bug Fix" Combo</button>
-                <button class="menu-btn" onclick="prepGame('vim')">3. Vim Command Drill</button>
-                <button class="menu-btn" onclick="prepGame('sudo')">4. Sudo Suicide</button>
-                <button class="menu-btn" onclick="prepGame('binary')">5. Binary Binge</button>
-                <button class="menu-btn" style="grid-column: span 2; border-color: #ffcc00; color: #ffcc00;" onclick="viewLeaderboard('reflex')">🏆 GLOBAL LEADERBOARDS</button>
-            </div>
+    <div class="project-grid" id="grid">
         </div>
 
-        <div id="tutorial-overlay" class="hidden">
-            <div id="tutorial-title">TUTORIAL</div>
-            <div id="tutorial-desc">Instructions go here.</div>
-            <button class="menu-btn" onclick="initiateCountdown()">INITIALIZE GAME</button>
-            <div style="margin-top: 15px; font-size: 0.8rem; color: #666; cursor: pointer;" onclick="showMenu()">[ ABORT ]</div>
-        </div>
-
-        <div id="countdown-overlay" class="hidden">
-            <div id="countdown-text">3</div>
-        </div>
-
-        <div id="game-reflex" class="game-panel hidden">
-            <div class="big-text" id="reflex-status">WAIT...</div>
-            <div class="timer" id="reflex-timer">0.00</div>
-            <div class="rank-display" id="reflex-rank"></div>
-            <button class="menu-btn" id="reflex-btn" onclick="initiateCountdown()">Restart</button>
-            <button class="menu-btn share-btn hidden" onclick="openSubmitModal()">Share Record</button>
-            <div class="back-hint">ESC to Menu</div>
-        </div>
-
-        <div id="game-combo" class="game-panel hidden">
-            <div id="combo-display" style="margin: 30px 0;"></div>
-            <div class="timer" id="combo-timer">0.00s</div>
-            <div class="rank-display" id="combo-rank"></div>
-            <button class="menu-btn" id="combo-btn" onclick="initiateCountdown()">Restart</button>
-            <button class="menu-btn share-btn hidden" onclick="openSubmitModal()">Share Record</button>
-            <div class="back-hint">ESC to Menu</div>
-        </div>
-
-        <div id="game-vim" class="game-panel hidden vim-mode">
-            <div class="vim-goal" id="vim-goal-text">-- VIM LOADED --</div>
-            <div class="timer" id="vim-timer" style="color:#ccc; font-size:2rem;">0.00s</div>
-            <div class="rank-display" id="vim-rank"></div>
-            <div style="font-size: 0.9rem; color:#555">Tasks Left: <span id="vim-count">0</span></div>
-            <div class="vim-user-input" id="vim-input-display"></div>
-            <button class="menu-btn" id="vim-btn" onclick="initiateCountdown()" style="border-color:#555; color:#555; margin-top:20px;">Restart</button>
-            <button class="menu-btn share-btn hidden" onclick="openSubmitModal()">Share Record</button>
-            <div class="back-hint">ESC to Menu</div>
-        </div>
-
-        <div id="game-sudo" class="game-panel hidden">
-            <div class="big-text" id="sudo-target" style="color: #fff; font-family: monospace; font-size: 1.5rem;"></div>
-            <div id="sudo-display" class="sudo-input">_</div>
-            <div class="timer" id="sudo-timer">0.00s</div>
-            <div class="rank-display" id="sudo-rank"></div>
-            <button class="menu-btn" id="sudo-btn" onclick="initiateCountdown()">Restart</button>
-            <button class="menu-btn share-btn hidden" onclick="openSubmitModal()">Share Record</button>
-            <div class="back-hint">ESC to Menu</div>
-        </div>
-
-        <div id="game-binary" class="game-panel hidden">
-            <div id="binary-container" class="binary-stream"></div>
-            <div class="timer" id="binary-timer">0.00s</div>
-            <div class="rank-display" id="binary-rank"></div>
-            <button class="menu-btn" id="binary-btn" onclick="initiateCountdown()">Restart</button>
-            <button class="menu-btn share-btn hidden" onclick="openSubmitModal()">Share Record</button>
-            <div class="back-hint">ESC to Menu</div>
-        </div>
-
-        <div id="leaderboard-modal" class="hidden">
-            <div class="modal-content" style="width: 500px;"> <h2>LEADERBOARDS</h2>
-                
-                <div class="lb-nav">
-                    <button class="nav-btn" onclick="viewLeaderboard('reflex')">Reflex</button>
-                    <button class="nav-btn" onclick="viewLeaderboard('combo')">Combo</button>
-                    <button class="nav-btn" onclick="viewLeaderboard('vim')">Vim</button>
-                    <button class="nav-btn" onclick="viewLeaderboard('sudo')">Sudo</button>
-                    <button class="nav-btn" onclick="viewLeaderboard('binary')">Binary</button>
-                </div>
-
-                <h3 id="lb-title" style="color:var(--text-color); margin-top:10px;">LOADING...</h3>
-                <div id="lb-list">Loading...</div>
-                <button class="menu-btn" onclick="closeModal('leaderboard-modal')">CLOSE</button>
-            </div>
-        </div>
-
-        <div id="submit-modal" class="hidden">
-            <div class="modal-content">
-                <h2>NEW RECORD</h2>
-                <p>Enter your name to immortalize your score.</p>
-                <input type="text" id="player-name" placeholder="Anonymous" maxlength="15">
-                <button class="menu-btn" onclick="submitToSupabase()">SUBMIT</button>
-                <button class="menu-btn" style="border-color: #555; color: #888;" onclick="closeModal('submit-modal')">CANCEL</button>
-            </div>
-        </div>
-
-    </div>
+    <footer>
+        &copy; 2025 Prototype Neo Industries. All rights reserved.
+    </footer>
 
     <script>
-
-        const supabaseUrl = 'https://plowkappobhtijindnds.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsb3drYXBwb2JodGlqaW5kbmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODAzNzEsImV4cCI6MjA4MjE1NjM3MX0.74LB8wzQhivYiSrWILiYX62AIbhe7NzvYk2KwnZIPEY';
-        const _db = supabase.createClient(supabaseUrl, supabaseKey);
-        // --- SYSTEM CORE ---
-        let currentGame = null;
-        let gameActive = false;
-        let startTime = 0;
-        let gameTimerInt = null;
-        let countdownInt = null; // Separate interval for countdown
-        let pendingScore = 0;
-        let reflexSpamCount = 0;
-        let reflexCheckInterval = null;
-        let pendingGameId = "";
-
-        
-        // --- RANKING LOGIC ---
-        function generateRankTable(ranks) {
-            let html = "<div class='rank-grid'>";
-            ranks.forEach(r => html += `<span>&lt; ${r.limit}: ${r.title}</span>`);
-            html += "<span>Else: AFK? 💤</span></div>";
-            return html;
-        }
-
-        const RANKS_REFLEX = [
-            { limit: "10ms", title: "Time Traveler ⏳", ms: 10 },
-            { limit: "50ms", title: "Script Kiddie Bot 🤖", ms: 50 },
-            { limit: "100ms", title: "Vim God ⚡", ms: 100 },
-            { limit: "130ms", title: "10x Developer 🚀", ms: 130 },
-            { limit: "160ms", title: "Senior Architect 🏗️", ms: 160 },
-            { limit: "190ms", title: "Tech Lead 💼", ms: 190 },
-            { limit: "220ms", title: "Senior Developer 👴", ms: 220 },
-            { limit: "250ms", title: "Mid-Level Dev 👨‍💻", ms: 250 },
-            { limit: "300ms", title: "Junior Developer 👶", ms: 300 },
-            { limit: "400ms", title: "Intern 🎓", ms: 400 },
-            { limit: "500ms", title: "CS Student 📚", ms: 500 },
-            { limit: "600ms", title: "StackOverflow Copier 📋", ms: 600 },
-            { limit: "800ms", title: "HTML Programmer 🏷️", ms: 800 },
-            { limit: "1.0s", title: "Two Finger Typer ✌️", ms: 1000 },
-            { limit: "1.5s", title: "Touchpad User 🖱️", ms: 1500 },
-            { limit: "3.0s", title: "Grandma Jo 👵", ms: 3000 }
-        ];
-
-        const RANKS_COMBO = [
-            { limit: "1.5s", title: "Keyboard Pianist 🎹", ms: 1500 },
-            { limit: "2.0s", title: "Shortcut King 👑", ms: 2000 },
-            { limit: "2.5s", title: "Senior Dev 👴", ms: 2500 },
-            { limit: "3.5s", title: "Productive Dev ⚡", ms: 3500 },
-            { limit: "5.0s", title: "Junior Dev 👶", ms: 5000 },
-            { limit: "7.0s", title: "Mouse User 🖱️", ms: 7000 },
-            { limit: "10s", title: "Menu Clicker 🐢", ms: 10000 }
-        ];
-
-        const RANKS_VIM = [
-            { limit: "2.5s", title: "Vim God ⚡", ms: 2500 },
-            { limit: "3.5s", title: "Sysadmin 🐧", ms: 3500 },
-            { limit: "5.0s", title: "DevOps Engineer 🔧", ms: 5000 },
-            { limit: "7.0s", title: "Nano User 📄", ms: 7000 },
-            { limit: "10s", title: "Notepad User 📝", ms: 10000 },
-            { limit: "15s", title: "Trapped Forever 🔒", ms: 15000 }
-        ];
-
-        const RANKS_SUDO = [
-            { limit: "2.0s", title: "Root Access 🔓", ms: 2000 },
-            { limit: "3.0s", title: "Linux Admin 🐧", ms: 3000 },
-            { limit: "4.5s", title: "Ubuntu User 🟠", ms: 4500 },
-            { limit: "6.0s", title: "Windows User 🪟", ms: 6000 },
-            { limit: "8.0s", title: "Mac User 🍎", ms: 8000 },
-            { limit: "12s", title: "Typo King 👑", ms: 12000 }
-        ];
-
-        const RANKS_BINARY = [
-            { limit: "2.0s", title: "The Matrix 🕶️", ms: 2000 },
-            { limit: "3.0s", title: "Assembly Coder ⚙️", ms: 3000 },
-            { limit: "4.0s", title: "C++ Dev 🚀", ms: 4000 },
-            { limit: "6.0s", title: "Python Dev 🐍", ms: 6000 },
-            { limit: "8.0s", title: "Scratch Dev 🐱", ms: 8000 },
-            { limit: "12s", title: "Human 🧍", ms: 12000 }
-        ];
-
-        const tutorials = {
-            'reflex': {
-                title: "Copy/Paste Chaos",
-                desc: `1. Wait for <span style='color:#00ff41'>GREEN</span>, then press <span class='key-hint'>Ctrl+V</span>.<br><br><b>RANKS (Reaction Time):</b>` + generateRankTable(RANKS_REFLEX)
+        // ==========================================
+        // 🎨 CONFIGURATION: DEFINE YOUR BUTTONS
+        // ==========================================
+        const projectList = [
+            {
+                title: "10x Dev Olympics",
+                desc: "sudo run simulation",
+                icon: "💻",
+                folder: "developer_olympics",
+                
+                // --- HACKER THEME ---
+                style: {
+                    background: "#000000",
+                    color: "#00ff41", // Matrix Green
+                    fontFamily: "'Courier New', monospace", // Old school terminal font
+                    border: "2px solid #00ff41",
+                    boxShadow: "0 0 10px rgba(0, 255, 65, 0.2)"
+                }
             },
-            'combo': {
-                title: "The Bug Fix Combo",
-                desc: "Press <span class='key-hint'>Ctrl + [Key]</span> for each box in order.<br><br><b>RANKS (Total Time):</b>" + generateRankTable(RANKS_COMBO)
-            },
-            'vim': {
-                title: "Vim Command Drill",
-                desc: "Type the Vim command matching the instruction (e.g. 'SAVE & QUIT' = <span class='key-hint'>:wq</span>).<br><br><b>RANKS (5 Tasks Time):</b>" + generateRankTable(RANKS_VIM)
-            },
-            'sudo': {
-                title: "Sudo Suicide",
-                desc: "Type the dangerous command perfectly. One typo resets the line.<br><br><b>RANKS (Typing Time):</b>" + generateRankTable(RANKS_SUDO)
-            },
-            'binary': {
-                title: "Binary Binge",
-                desc: "Clear 20 bits by pressing <span class='key-hint'>0</span> or <span class='key-hint'>1</span>.<br><br><b>RANKS (Completion Time):</b>" + generateRankTable(RANKS_BINARY)
-            }
-        };
-
-        function getRankTitle(ms, table) {
-            for (let r of table) {
-                if (ms < r.ms) return r.title;
-            }
-            return "AFK? 💤";
-        }
-
-        // --- CORE FUNCTIONS ---
-        function showMenu() {
-            gameActive = false;
-            currentGame = null;
-            // KILL ALL TIMERS
-            clearInterval(gameTimerInt);
-            clearInterval(countdownInt); 
-            clearInterval(reflexCheckInterval);
-            clearTimeout(reflexTimeout);
-
-            document.querySelectorAll('.game-panel').forEach(p => p.classList.add('hidden'));
-            document.getElementById('main-menu').classList.remove('hidden');
-            document.getElementById('tutorial-overlay').classList.add('hidden'); 
-            document.getElementById('countdown-overlay').classList.add('hidden');
-            document.body.style.backgroundColor = 'var(--bg-color)';
             
-            // --- ADD THIS LINE HERE ---
-            document.querySelectorAll('.menu-btn').forEach(b => b.style.display = ''); 
-            // --------------------------
-
-            wrapper.focus();
-        }
-
-        function prepGame(gameId) {
-            document.getElementById('main-menu').classList.add('hidden');
-            const data = tutorials[gameId];
-            document.getElementById('tutorial-title').innerText = data.title;
-            document.getElementById('tutorial-desc').innerHTML = data.desc;
-            document.getElementById('tutorial-overlay').classList.remove('hidden');
-            currentGame = gameId; 
-        }
-        function failReflex(msg) {
-            clearTimeout(reflexTimeout);
-            clearInterval(reflexCheckInterval);
-            reflexPhase = 'idle';
-            
-            document.body.style.backgroundColor = "var(--fail-color)";
-            document.getElementById('reflex-status').innerHTML = msg; // innerHTML allows <br>
-            
-            // Shake screen
-            document.getElementById('game-reflex').classList.add('shake');
-            setTimeout(()=>document.getElementById('game-reflex').classList.remove('shake'), 300);
-            
-            // Show restart button
-            document.getElementById('reflex-btn').style.display = 'inline-block';
-        }
-
-        // --- COUNTDOWN SYSTEM ---
-        function initiateCountdown() {
-            document.getElementById('tutorial-overlay').classList.add('hidden');
-            document.getElementById(`game-${currentGame}`).classList.remove('hidden');
-            
-            // Hide Restart buttons immediately
-            document.querySelectorAll('.game-panel .menu-btn').forEach(b => b.style.display = 'none');
-            
-            const overlay = document.getElementById('countdown-overlay');
-            const text = document.getElementById('countdown-text');
-            overlay.classList.remove('hidden');
-            
-            let count = 3;
-            text.innerText = count;
-            text.style.color = "#fff";
-
-            // Reset Game UI State Behind the curtain
-            resetGameUI(currentGame);
-
-            countdownInt = setInterval(() => {
-                count--;
-                if(count > 0) {
-                    text.innerText = count;
-                    text.style.animation = 'none';
-                    text.offsetHeight; /* trigger reflow */
-                    text.style.animation = 'pop 0.2s ease-out';
-                } else if (count === 0) {
-                    text.innerText = "GO!";
-                    text.style.color = "var(--text-color)";
-                } else {
-                    clearInterval(countdownInt);
-                    overlay.classList.add('hidden');
-                    launchActualGame();
+            // --- TEMPLATE FOR FUTURE PROJECTS ---
+            /*
+            {
+                title: "Cat Memes",
+                desc: "Very cute.",
+                icon: "😺",
+                folder: "cats",
+                style: {
+                    background: "#ffbe76", // Orange
+                    color: "#000000",
+                    fontFamily: "Comic Sans MS, cursive" // Goofy font for this specific button
                 }
-            }, 800);
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function openSubmitModal() {
-            document.getElementById('submit-modal').classList.remove('hidden');
-            document.getElementById('player-name').focus();
-        }
-
-        // MAP: Translates internal Game ID -> Your Real Supabase Table Name
-        const TABLE_MAP = {
-            'reflex': 'copy_paste',
-            'combo': 'bug_fix_combo',
-            'vim': 'vim',
-            'sudo': 'sudo',
-            'binary': 'binary'
-        };
-
-        async function handleGameEnd(gameId, score) {
-            pendingScore = parseFloat(score);
-            pendingGameId = gameId;
-            const realTableName = TABLE_MAP[gameId]; 
-
-            // 1. Force the "Share" button to appear
-            const activePanel = document.getElementById(`game-${gameId}`);
-            
-            // Find the share button by class
-            const shareBtn = activePanel.querySelector('.share-btn'); 
-            
-            if (shareBtn) {
-                shareBtn.classList.remove('hidden');
-                shareBtn.style.display = 'inline-block'; // FORCE VISIBILITY
-                shareBtn.onclick = openSubmitModal;
             }
-
-            // 2. Check Database for Top Score
-            console.log(`Checking DB table: ${realTableName}`);
-            
-            const { data, error } = await _db
-                .from(realTableName)
-                .select('record')
-                .order('record', { ascending: true })
-                .limit(1);
-
-            if (error) {
-                console.error("Supabase Error:", error);
-                return;
-            }
-
-            // Auto-open if table is empty OR new score is lower (better) than top score
-            if (data.length === 0 || pendingScore < data[0].record) {
-                openSubmitModal(); 
-            }
-        }
-
-        async function submitToSupabase() {
-            const nameInput = document.getElementById('player-name');
-            let name = nameInput.value.trim() || "Anonymous";
-            const realTableName = TABLE_MAP[pendingGameId];
-
-            const { error } = await _db
-                .from(realTableName)
-                .insert({ name: name, record: pendingScore });
-
-            if (!error) {
-                alert("Record Saved!");
-                closeModal('submit-modal');
-                nameInput.value = ""; 
-                viewLeaderboard(pendingGameId); 
-            } else {
-                alert("Error saving: " + error.message);
-            }
-        }
-
-        async function viewLeaderboard(gameId) {
-            if(!gameId) gameId = currentGame || 'reflex';
-            const realTableName = TABLE_MAP[gameId];
-            
-            document.getElementById('leaderboard-modal').classList.remove('hidden');
-            document.getElementById('lb-title').innerText = gameId.toUpperCase() + " RANKINGS";
-            const list = document.getElementById('lb-list');
-            list.innerHTML = "Loading...";
-
-            const { data, error } = await _db
-                .from(realTableName)
-                .select('name, record, timestamp')
-                .order('record', { ascending: true })
-                .limit(20);
-
-            if (error) {
-                list.innerText = "Error loading data.";
-                return;
-            }
-
-            list.innerHTML = "";
-            data.forEach((row, index) => {
-                let scoreDisplay = gameId === 'reflex' ? `${row.record} ms` : `${row.record} s`;
-                list.innerHTML += `
-                    <div class="lb-row">
-                        <span>#${index + 1} ${row.name}</span>
-                        <span>${scoreDisplay}</span>
-                    </div>
-                `;
-            });
-        }
-
-        function resetGameUI(game) {
-            if(game === 'reflex') {
-                document.getElementById('reflex-status').innerText = "WAIT...";
-                document.getElementById('reflex-status').style.color = "var(--text-color)";
-                document.getElementById('reflex-rank').innerText = "";
-            }
-            if(game === 'combo') {
-                document.getElementById('combo-display').innerHTML = '';
-                document.getElementById('combo-rank').innerText = "";
-            }
-            if(game === 'vim') {
-                document.getElementById('vim-input-display').innerText = "";
-                document.getElementById('vim-goal-text').innerText = "-- VIM LOADED --";
-                document.getElementById('vim-rank').innerText = "";
-            }
-            if(game === 'sudo') {
-                document.getElementById('sudo-display').innerText = "_";
-                document.getElementById('sudo-target').innerText = "sudo ...";
-                document.getElementById('sudo-rank').innerText = "";
-            }
-            if(game === 'binary') {
-                document.getElementById('binary-container').innerHTML = "";
-                document.getElementById('binary-rank').innerText = "";
-            }
-        }
-
-        function launchActualGame() {
-            if(currentGame === 'reflex') startReflex();
-            else if(currentGame === 'combo') startCombo();
-            else if(currentGame === 'vim') startVim();
-            else if(currentGame === 'sudo') startSudo();
-            else if(currentGame === 'binary') startBinary();
-        }
-
-        function updateTimer(elementId) {
-            const now = Date.now();
-            const diff = (now - startTime) / 1000;
-            document.getElementById(elementId).innerText = diff.toFixed(2) + "s";
-        }
-
-        // --- GAME 1: REFLEX ---
-        let reflexPhase = 'idle'; 
-        let reflexTimeout;
-
-        function startReflex() {
-            document.getElementById('reflex-btn').style.display = 'none';
-            document.getElementById('reflex-rank').innerText = "";
-            reflexPhase = 'spam';
-            document.getElementById('reflex-status').innerText = "SPAM CTRL+C !!!";
-            document.body.style.backgroundColor = "#b30000"; 
-            
-            // RESET SPAM COUNTER
-            reflexSpamCount = 0;
-
-            // START CPS CHECKER (The new logic)
-            if (reflexCheckInterval) clearInterval(reflexCheckInterval);
-            reflexCheckInterval = setInterval(() => {
-                if (reflexPhase === 'spam') {
-                    // Check if they clicked less than 7 times in the last second
-                    if (reflexSpamCount < 4) {
-                        failReflex("TOO SLOW!<br><span style='font-size:1rem'>Must spam 4+ times/sec</span>");
-                    }
-                    reflexSpamCount = 0; // Reset counter for the next second
-                } else {
-                    clearInterval(reflexCheckInterval);
-                }
-            }, 1000);
-            
-            const delay = Math.floor(Math.random() * 3000) + 2000;
-            
-            // FORCE FOCUS FIX
-            setTimeout(() => wrapper.focus(), 10);
-
-            reflexTimeout = setTimeout(() => {
-                reflexPhase = 'paste';
-                // Clear the spam checker so they don't fail while trying to paste
-                clearInterval(reflexCheckInterval);
-                
-                document.body.style.backgroundColor = "#00cc00"; 
-                document.getElementById('reflex-status').innerText = "PRESS CTRL+V !!!";
-                document.getElementById('reflex-status').style.color = "#000";
-                startTime = Date.now(); 
-            }, delay);
-        }
-
-        // --- GAME 2: COMBO ---
-        const comboKeys = ['s', 'a', 'x', 'z', 'c', 'v', 'f'];
-        let comboSequence = [];
-        let comboIndex = 0;
-
-        function startCombo() {
-            gameActive = true;
-            comboSequence = [];
-            comboIndex = 0;
-            const display = document.getElementById('combo-display');
-            display.innerHTML = '';
-            for(let i=0; i<8; i++) {
-                const k = comboKeys[Math.floor(Math.random() * comboKeys.length)];
-                comboSequence.push(k);
-                display.innerHTML += `<div class="key-box" id="ckey-${i}">Ctrl+${k.toUpperCase()}</div>`;
-            }
-            document.getElementById(`ckey-0`).classList.add('active');
-            startTime = Date.now();
-            gameTimerInt = setInterval(() => updateTimer('combo-timer'), 10);
-        }
-
-        // --- GAME 3: VIM ---
-        let vimInput = "";
-        let vimTasks = [];
-        let currentVimTask = null;
-        let vimTaskIndex = 0;
-        const vimDictionary = [
-            { text: "SAVE & QUIT!", cmd: ":wq" },
-            { text: "FORCE QUIT!", cmd: ":q!" },
-            { text: "DELETE LINE!", cmd: "dd" },
-            { text: "GO TO TOP!", cmd: "gg" },
-            { text: "GO TO BOTTOM!", cmd: "G" },
-            { text: "UNDO!", cmd: "u" },
-            { text: "INSERT MODE!", cmd: "i" },
-            { text: "PASTE AFTER!", cmd: "p" }
+            */
         ];
 
-        function startVim() {
-            gameActive = true;
-            vimInput = "";
-            vimTaskIndex = 0;
-            vimTasks = [];
-            for(let i=0; i<5; i++) {
-                vimTasks.push(vimDictionary[Math.floor(Math.random() * vimDictionary.length)]);
+        // ==========================================
+        // 🛠️ RENDER LOGIC
+        // ==========================================
+        const grid = document.getElementById('grid');
+
+        projectList.forEach(proj => {
+            const card = document.createElement('a');
+            card.className = 'card';
+            card.href = `./${proj.folder}/index.html`; 
+
+            // Apply custom CSS styles from config
+            if (proj.style) {
+                Object.assign(card.style, proj.style);
             }
-            nextVimTask();
-            startTime = Date.now();
-            gameTimerInt = setInterval(() => updateTimer('vim-timer'), 10);
-        }
+            
+            card.innerHTML = `
+                <div class="card-icon">${proj.icon}</div>
+                <h2 class="card-title">${proj.title}</h2>
+                <p class="card-desc">${proj.desc}</p>
+            `;
 
-        function nextVimTask() {
-            if(vimTaskIndex >= vimTasks.length) {
-                // WIN
-                gameActive = false;
-                clearInterval(gameTimerInt);
-                
-                const finalTime = (Date.now() - startTime) / 1000; 
-                
-                document.getElementById('vim-goal-text').innerText = "DONE.";
-                document.getElementById('vim-rank').innerText = getRankTitle(finalTime * 1000, RANKS_VIM);
-                document.getElementById('vim-btn').style.display = 'inline-block';
-                
-                // NEW: Database Call
-                handleGameEnd('vim', finalTime); 
-                return;
-            }
-            currentVimTask = vimTasks[vimTaskIndex];
-            document.getElementById('vim-goal-text').innerText = currentVimTask.text;
-            document.getElementById('vim-count').innerText = (vimTasks.length - vimTaskIndex);
-            vimInput = "";
-            document.getElementById('vim-input-display').innerText = "";
-        }
-
-        // --- GAME 4: SUDO ---
-        const sudoPhrases = [
-            "sudo rm -rf /",
-            "sudo shutdown -h now",
-            "sudo reboot",
-            "sudo poweroff",
-            "sudo halt",
-            "sudo init 0",
-            "sudo init 6",
-            "sudo chmod 777 /",
-            "sudo chown root:root /",
-            "sudo userdel -r root",
-            "sudo passwd root",
-            "sudo dd if=/dev/zero of=/dev/sda",
-            "sudo dd if=/dev/random of=/dev/sda",
-            "sudo mkfs.ext4 /dev/sda",
-            "sudo mkfs.vfat /dev/sda",
-            "sudo fsck -y /dev/sda",
-            "sudo mount /dev/sda /mnt",
-            "sudo umount -a",
-            "sudo kill -9 1",
-            "sudo killall init",
-            "sudo systemctl stop ssh",
-            "sudo systemctl disable ssh",
-            "sudo systemctl stop NetworkManager",
-            "sudo systemctl disable NetworkManager",
-            "sudo ip link set eth0 down",
-            "sudo ifconfig eth0 down",
-            "sudo route del default",
-            "sudo rm -rf /boot",
-            "sudo rm -rf /etc",
-            "sudo rm -rf /usr",
-            "sudo rm -rf /var",
-            "sudo rm -rf /home",
-            "sudo rm -rf ~/.ssh",
-            "sudo truncate -s 0 /etc/passwd",
-            "sudo truncate -s 0 /etc/shadow",
-            "sudo chmod 000 /bin/bash",
-            "sudo ln -sf /dev/null /etc/passwd",
-            "sudo echo '>' /etc/fstab",
-            "sudo crontab -r",
-            "sudo rm -rf /tmp/*",
-            "sudo rm -rf /var/log/*",
-            "sudo swapoff -a",
-            "sudo sysctl -w kernel.panic=1",
-            "sudo sysctl -w kernel.randomize_va_space=0",
-            "sudo modprobe -r ext4",
-            "sudo modprobe -r usb_storage",
-            "sudo update-initramfs -d",
-            "sudo grub-install /dev/sda",
-            "git push origin master -f"
-        ];
-
-        let sudoTarget = "";
-        let sudoInput = "";
-
-        function startSudo() {
-            gameActive = true;
-            sudoInput = "";
-            sudoTarget = sudoPhrases[Math.floor(Math.random() * sudoPhrases.length)];
-            document.getElementById('sudo-target').innerText = sudoTarget;
-            document.getElementById('sudo-display').innerText = "_";
-            document.getElementById('sudo-display').style.color = "var(--fail-color)";
-            startTime = Date.now();
-            gameTimerInt = setInterval(() => updateTimer('sudo-timer'), 10);
-        }
-
-        // --- GAME 5: BINARY ---
-        let binarySeq = "";
-        let binaryIndex = 0;
-
-        function startBinary() {
-            gameActive = true;
-            binarySeq = "";
-            binaryIndex = 0;
-            const container = document.getElementById('binary-container');
-            container.innerHTML = "";
-            for(let i=0; i<20; i++) {
-                const bit = Math.random() > 0.5 ? "1" : "0";
-                binarySeq += bit;
-                container.innerHTML += `<span class="binary-char" id="bit-${i}">${bit}</span>`;
-            }
-            document.getElementById('bit-0').classList.add('current');
-            startTime = Date.now();
-            gameTimerInt = setInterval(() => updateTimer('binary-timer'), 10);
-        }
-
-        // --- GLOBAL INPUT CONTROLLER ---
-        // Attached to document to guarantee key capture regardless of focus
-        document.addEventListener('keydown', (e) => {
-            if (e.key === "Escape") { showMenu(); return; }
-
-            // --- GAME 1: REFLEX ---
-            if (currentGame === 'reflex') {
-                if (e.ctrlKey && e.key.toLowerCase() === 'c') {
-                    e.preventDefault();
-                    if(reflexPhase === 'spam') {
-                        // NEW: Increment count
-                        reflexSpamCount++; 
-                        
-                        document.getElementById('reflex-status').style.transform = "scale(1.1)";
-                        setTimeout(()=>document.getElementById('reflex-status').style.transform = "scale(1)", 50);
-                    }
-                }
-                if (e.ctrlKey && e.key.toLowerCase() === 'v') {
-                    e.preventDefault();
-                    if(reflexPhase === 'spam') {
-                        // Use the new fail function here too
-                        failReflex("TOO EARLY!");
-                    } else if (reflexPhase === 'paste') {
-                        // ... (Win logic remains exactly the same as before) ...
-                        const reactionTime = Date.now() - startTime; 
-                        reflexPhase = 'idle';
-                        document.body.style.backgroundColor = "var(--bg-color)";
-                        document.getElementById('reflex-status').style.color = "var(--text-color)";
-                        document.getElementById('reflex-status').innerText = reactionTime + " ms";
-                        document.getElementById('reflex-rank').innerText = getRankTitle(reactionTime, RANKS_REFLEX);
-                        document.getElementById('reflex-btn').style.display = 'inline-block';
-                        
-                        handleGameEnd('reflex', reactionTime);
-                    }
-                }
-            }
-
-            // --- GAME 2: COMBO ---
-            if (currentGame === 'combo' && gameActive) {
-                if (e.ctrlKey) {
-                    e.preventDefault();
-                    if (e.key.toLowerCase() === comboSequence[comboIndex]) {
-                        document.getElementById(`ckey-${comboIndex}`).classList.remove('active');
-                        document.getElementById(`ckey-${comboIndex}`).classList.add('done');
-                        comboIndex++;
-                        if(comboIndex < comboSequence.length) {
-                            document.getElementById(`ckey-${comboIndex}`).classList.add('active');
-                        } else {
-                            // WIN
-                            gameActive = false;
-                            clearInterval(gameTimerInt);
-                            const finalTime = (Date.now() - startTime) / 1000; 
-                            document.getElementById('combo-rank').innerText = getRankTitle(finalTime * 1000, RANKS_COMBO);
-                            document.getElementById('combo-btn').style.display = 'inline-block';
-                            
-                            // NEW: Database Call
-                            handleGameEnd('combo', finalTime);
-                        }
-                    }
-                }
-            }
-
-            // --- GAME 3: VIM (Typing logic only, win logic is in nextVimTask) ---
-            if (currentGame === 'vim' && gameActive) {
-                e.preventDefault();
-                if (e.key.length === 1) vimInput += e.key;
-                else if (e.key === "Backspace") vimInput = vimInput.slice(0, -1);
-                
-                if (vimInput === currentVimTask.cmd) {
-                    vimTaskIndex++;
-                    nextVimTask();
-                } else if (vimInput.length > currentVimTask.cmd.length) {
-                    vimInput = "";
-                    document.getElementById('game-vim').classList.add('shake');
-                    setTimeout(()=>document.getElementById('game-vim').classList.remove('shake'), 300);
-                }
-                document.getElementById('vim-input-display').innerText = vimInput;
-            }
-
-            // --- GAME 4: SUDO ---
-            if (currentGame === 'sudo' && gameActive) {
-                if (e.key.length !== 1) return;
-                const expectedChar = sudoTarget[sudoInput.length];
-                if (e.key === expectedChar) {
-                    sudoInput += e.key;
-                    document.getElementById('sudo-display').innerText = sudoInput + "_";
-                    document.getElementById('sudo-display').style.color = "var(--text-color)";
-                    if (sudoInput === sudoTarget) {
-                        // WIN
-                        gameActive = false;
-                        clearInterval(gameTimerInt);
-                        const finalTime = (Date.now() - startTime) / 1000;
-                        document.getElementById('sudo-rank').innerText = getRankTitle(finalTime * 1000, RANKS_SUDO);
-                        document.getElementById('sudo-btn').style.display = 'inline-block';
-                        
-                        // NEW: Database Call
-                        handleGameEnd('sudo', finalTime);
-                    }
-                } else {
-                    sudoInput = "";
-                    document.getElementById('sudo-display').innerText = "_";
-                    document.getElementById('sudo-display').style.color = "var(--fail-color)";
-                    document.getElementById('game-sudo').classList.add('shake');
-                    setTimeout(()=>document.getElementById('game-sudo').classList.remove('shake'), 300);
-                }
-            }
-
-            // --- GAME 5: BINARY ---
-            if (currentGame === 'binary' && gameActive) {
-                if (e.key === "0" || e.key === "1") {
-                    if (e.key === binarySeq[binaryIndex]) {
-                        document.getElementById(`bit-${binaryIndex}`).classList.remove('current');
-                        document.getElementById(`bit-${binaryIndex}`).classList.add('done');
-                        binaryIndex++;
-                        if (binaryIndex < binarySeq.length) {
-                            document.getElementById(`bit-${binaryIndex}`).classList.add('current');
-                        } else {
-                            // WIN
-                            gameActive = false;
-                            clearInterval(gameTimerInt);
-                            const finalTime = (Date.now() - startTime) / 1000;
-                            document.getElementById('binary-rank').innerText = getRankTitle(finalTime * 1000, RANKS_BINARY);
-                            document.getElementById('binary-btn').style.display = 'inline-block';
-                            
-                            // NEW: Database Call
-                            handleGameEnd('binary', finalTime);
-                        }
-                    } else {
-                        document.getElementById('game-binary').classList.add('shake');
-                        setTimeout(()=>document.getElementById('game-binary').classList.remove('shake'), 300);
-                    }
-                }
-            }
+            grid.appendChild(card);
         });
     </script>
 </body>
-
 </html>
