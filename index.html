@@ -63,8 +63,6 @@
             background: linear-gradient(135deg, #d8d8d8 0%, #737373 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            
-            /* FIX FOR CUT-OFF TEXT */
             line-height: 1.3; 
             padding-bottom: 10px; 
         }
@@ -83,7 +81,6 @@
         /* --- GRID LAYOUT --- */
         .project-grid {
             display: grid;
-            /* Reverted to 280px for desktop (User preference) */
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 30px;
             width: 100%;
@@ -92,15 +89,13 @@
             box-sizing: border-box;
         }
 
-        /* --- GOOFY CARD LOGIC --- */
+        /* --- STANDARD CARD LOGIC --- */
         .card {
             background: #1c1c1c;
             color: white;
             border-radius: 20px;
             padding: 30px;
             text-decoration: none;
-            
-            /* Reverted to fixed height for consistent button size */
             height: 220px; 
             display: flex;
             flex-direction: column;
@@ -108,20 +103,15 @@
             align-items: center;
             text-align: center;
             position: relative;
-            
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             border: 1px solid #333;
         }
 
         .card:hover {
-            transform: scale(1.05) rotate(-1deg);
+            transform: scale(1.05);
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
             z-index: 10;
-        }
-
-        .card:nth-child(even):hover {
-            transform: scale(1.05) rotate(1deg);
         }
 
         .card:active {
@@ -151,6 +141,83 @@
             margin-top: 10px;
         }
 
+        /* =========================================================
+           👾 RETRO IBM / GLITCH CARD STYLES (Specific to this ID)
+           ========================================================= */
+        #hacker-card {
+            /* Black Hole Background */
+            background-color: #000000;
+            background-image: 
+                radial-gradient(circle, rgba(0, 50, 0, 0.1) 0%, transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, #001100 3px);
+            
+            border: 2px solid #33ff00;
+            box-shadow: 0 0 15px rgba(51, 255, 0, 0.2);
+            font-family: 'Courier New', Courier, monospace;
+            position: relative;
+            overflow: hidden; /* Keeps binary inside */
+            z-index: 1;
+        }
+
+        #hacker-card:hover {
+            box-shadow: 0 0 25px rgba(51, 255, 0, 0.6), inset 0 0 20px rgba(51, 255, 0, 0.2);
+            border-color: #55ff55;
+            animation: border-twitch 0.3s infinite;
+        }
+
+        /* Text Glitch Effect */
+        #hacker-card .card-title, 
+        #hacker-card .card-desc,
+        #hacker-card .card-icon {
+            color: #33ff00;
+            text-shadow: 2px 0 #ff0000, -2px 0 #0000ff; /* RGB Split */
+            position: relative;
+            z-index: 10; /* Keep text above binary */
+        }
+
+        #hacker-card:hover .card-title {
+            animation: text-glitch 0.4s infinite;
+        }
+
+        /* Floating Binary Particles */
+        .binary-particle {
+            position: absolute;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+            z-index: 2; /* Below text, above background */
+            animation: floatUp linear forwards;
+        }
+
+        /* Animations */
+        @keyframes floatUp {
+            0% { transform: translateY(100px); opacity: 0; }
+            20% { opacity: 0.6; }
+            80% { opacity: 0.6; }
+            100% { transform: translateY(-150px); opacity: 0; }
+        }
+
+        @keyframes border-twitch {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes text-glitch {
+            0% { clip-path: inset(0 0 0 0); transform: translate(0); }
+            20% { clip-path: inset(10% 0 30% 0); transform: translate(-3px, 1px); }
+            40% { clip-path: inset(60% 0 10% 0); transform: translate(3px, -1px); }
+            60% { clip-path: inset(20% 0 50% 0); transform: translate(-2px, 2px); }
+            80% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+            100% { clip-path: inset(0 0 0 0); transform: translate(0); }
+        }
+
         /* --- FOOTER --- */
         footer {
             margin-top: auto;
@@ -171,33 +238,13 @@
            📱 MOBILE RESPONSIVE STYLES
            ========================================= */
         @media (max-width: 768px) {
+            header { padding: 50px 20px 30px; }
+            .title-container { flex-direction: column; gap: 15px; }
+            .logo-img { width: 100px; }
+            h1 { font-size: 2.2rem; text-align: center; }
+            p.subtitle { font-size: 0.85rem; line-height: 1.4; }
             
-            header {
-                padding: 50px 20px 30px;
-            }
-
-            .title-container {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .logo-img {
-                width: 100px; 
-            }
-
-            h1 {
-                font-size: 2.2rem; 
-                text-align: center;
-            }
-
-            p.subtitle {
-                font-size: 0.85rem;
-                line-height: 1.4;
-            }
-
-            /* Adjust Grid for Mobile */
             .project-grid {
-                /* Use smaller columns on mobile only */
                 grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
                 gap: 15px;
                 padding: 15px;
@@ -205,17 +252,12 @@
 
             .card {
                 padding: 20px;
-                height: auto; /* Allow height to adapt on very small screens if text is long */
+                height: auto; 
                 min-height: 180px; 
             }
 
-            .card-icon {
-                font-size: 2.8rem; 
-            }
-
-            .card-title {
-                font-size: 1.3rem;
-            }
+            .card-icon { font-size: 2.8rem; }
+            .card-title { font-size: 1.3rem; }
         }
         
     </style>
@@ -247,16 +289,9 @@
                 desc: "Optimize Workflow // Destroy Keyboard",
                 icon: "💻",
                 folder: "developer_olympics",
-                
-                // --- HACKER THEME ---
-                style: {
-                    background: "#000000",
-                    color: "#00ff41", 
-                    fontFamily: "'Courier New', monospace", 
-                    border: "2px solid #00ff41",
-                    boxShadow: "0 0 10px rgba(0, 255, 65, 0.2)"
-                }
+                id: "hacker-card", // UNIQUE ID for the Matrix effect
             },
+            // Add more projects here later...
         ];
 
         // ==========================================
@@ -268,12 +303,10 @@
             const card = document.createElement('a');
             card.className = 'card';
             card.href = `./${proj.folder}/index.html`; 
-
-            // Apply custom CSS styles from config
-            if (proj.style) {
-                Object.assign(card.style, proj.style);
-            }
             
+            // Assign ID if it exists (Crucial for the hacker effect)
+            if(proj.id) card.id = proj.id;
+
             card.innerHTML = `
                 <div class="card-icon">${proj.icon}</div>
                 <h2 class="card-title">${proj.title}</h2>
@@ -282,6 +315,38 @@
 
             grid.appendChild(card);
         });
+
+        // ==========================================
+        // 👾 MATRIX PARTICLE GENERATOR
+        // (Only runs inside the hacker-card)
+        // ==========================================
+        const hackerCard = document.getElementById('hacker-card');
+
+        if (hackerCard) {
+            setInterval(() => {
+                const bit = document.createElement('span');
+                bit.classList.add('binary-particle');
+                bit.innerText = Math.random() > 0.5 ? '1' : '0';
+
+                // Random Position inside the card
+                const x = Math.random() * 100; // percent
+                const y = Math.random() * 100; // percent
+                
+                bit.style.left = x + '%';
+                bit.style.top = y + '%';
+                
+                // Random Speed
+                const duration = Math.random() * 2 + 1; // 1s to 3s
+                bit.style.animationDuration = duration + 's';
+
+                hackerCard.appendChild(bit);
+
+                // Cleanup to prevent memory leaks
+                setTimeout(() => {
+                    bit.remove();
+                }, duration * 1000);
+            }, 100); // Spawn a new bit every 100ms
+        }
     </script>
 </body>
 </html>
