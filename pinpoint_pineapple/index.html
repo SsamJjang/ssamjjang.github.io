@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinpoint Pineapple 🍍</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-yellow: #ffecb3;
+            --pineapple-green: #2e7d32;
+            --pineapple-gold: #fbc02d;
+            --accent-orange: #ff6f00;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+            background-color: var(--bg-yellow);
+            color: #4e342e;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image: radial-gradient(#ffd54f 20%, transparent 20%), radial-gradient(#ffd54f 20%, transparent 20%);
+            background-position: 0 0, 50px 50px;
+            background-size: 100px 100px;
+            
+            /* 🛑 FIX HORIZONTAL SCROLL */
+            overflow-x: hidden; 
+            width: 100%;
+        }
+
+        /* --- HEADER --- */
+        header {
+            text-align: center;
+            padding: 40px 20px 20px;
+            animation: bounceIn 1s;
+        }
+
+        h1 {
+            color: var(--pineapple-green);
+            font-size: 3.5rem;
+            margin: 0;
+            text-shadow: 3px 3px 0px #fff, 6px 6px 0px rgba(0,0,0,0.1);
+            letter-spacing: -2px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--accent-orange);
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* --- LEADERBOARD --- */
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+            /* Ensure container doesn't overflow horizontally */
+            overflow: hidden; 
+        }
+
+        .leaderboard-card {
+            background: white;
+            border: 4px solid var(--pineapple-green);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.1);
+            position: relative;
+            
+            /* 🟢 CHANGE: Auto height to stretch with content */
+            height: auto; 
+            min-height: 300px;
+            
+            display: flex;
+            flex-direction: column;
+        }
+
+        .leaderboard-card::before {
+            content: "👑 HALL OF FAME";
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--pineapple-gold);
+            padding: 5px 20px;
+            border-radius: 20px;
+            border: 3px solid var(--pineapple-green);
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+            white-space: nowrap;
+            z-index: 5;
+        }
+
+        .lb-list {
+            margin-top: 20px;
+            /* 🟢 CHANGE: Remove internal scrolling */
+            overflow: visible; 
+            width: 100%;
+        }
+
+        .lb-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 2px dashed #eee;
+            transition: background 0.2s, transform 0.1s;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box; /* Ensures padding doesn't widen the div */
+        }
+
+        .lb-item:hover { 
+            background: #fffde7; 
+            transform: scale(1.02);
+        }
+
+        .lb-rank {
+            font-size: 1.5rem;
+            font-weight: bold;
+            width: 40px; /* Fixed width */
+            min-width: 40px; /* Prevent crushing */
+            color: var(--accent-orange);
+            text-align: center;
+        }
+
+        .lb-img {
+            width: 60px;
+            height: 60px;
+            min-width: 60px; /* Prevent squishing */
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--pineapple-gold);
+            margin-right: 15px;
+            background: #eee;
+        }
+
+        .lb-info { 
+            flex-grow: 1; 
+            /* 🛑 FIX: Prevent text from pushing width out */
+            min-width: 0; 
+            margin-right: 10px;
+        }
+
+        .lb-name { 
+            font-weight: bold; 
+            font-size: 1rem; 
+            
+            /* 🛑 FIX: Cut off long names with "..." */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lb-stats { font-size: 0.8rem; color: #888; }
+        
+        .lb-score { 
+            font-size: 1.4rem; 
+            font-weight: bold; 
+            color: var(--pineapple-green);
+            white-space: nowrap;
+        }
+
+        /* --- PAGINATION CONTROLS --- */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+        }
+
+        .page-btn {
+            background: var(--pineapple-green);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+        }
+        
+        .page-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: bold;
+        }
+
+        /* --- ACTION BUTTON --- */
+        .action-area {
+            position: sticky;
+            bottom: 20px;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .play-btn {
+            background: var(--accent-orange);
+            color: white;
+            border: 4px solid #fff;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            font-family: inherit;
+            font-weight: bold;
+            transition: transform 0.1s, background 0.2s;
+            animation: pulse 2s infinite;
+        }
+
+        .play-btn:hover { transform: scale(1.05); background: #f57c00; }
+        .play-btn:active { transform: scale(0.95); }
+
+        /* --- MODALS --- */
+        #game-overlay, #view-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        .hidden { display: none !important; }
+
+        .game-card {
+            background: #fff;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 5px solid var(--pineapple-gold);
+            
+            /* Safety for small mobile screens */
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .img-container {
+            width: 100%;
+            height: 300px;
+            background: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #eee;
+        }
+
+        #current-img, #view-img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .rating-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .rate-btn {
+            background: var(--pineapple-green);
+            color: white;
+            border: none;
+            padding: 12px 0;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.1s;
+        }
+
+        .rate-btn:hover { background: #1b5e20; transform: translateY(-2px); }
+        .rate-btn:active { transform: translateY(0); }
+        
+        .rate-btn:nth-child(-n+3) { background-color: #d32f2f; }
+        .rate-btn:nth-child(n+4):nth-child(-n+6) { background-color: #f57c00; }
+        .rate-btn:nth-child(n+7) { background-color: #388e3c; }
+
+        .close-btn {
+            background: transparent;
+            border: 2px solid #ccc;
+            color: #888;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .close-btn:hover { border-color: #888; color: #333; }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Pinpoint Pineapple 🍍</h1>
+        <div class="subtitle">Finding the Perfect Pineapple</div>
+    </header>
+
+    <div class="container">
+        <div class="leaderboard-card">
+            
+            <div id="lb-container" class="lb-list">
+                <div style="text-align:center; padding:20px; color:#888;">Polishing pineapples...</div>
+            </div>
+
+            <div class="pagination">
+                <button id="prev-btn" class="page-btn" onclick="prevPage()" disabled>Previous</button>
+                <span id="page-info" class="page-info">Page 1</span>
+                <button id="next-btn" class="page-btn" onclick="nextPage()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-area">
+        <button class="play-btn" onclick="openGame()">🔍 START JUDGING</button>
+    </div>
+
+    <div id="game-overlay" class="hidden">
+        <div class="game-card">
+            <h2 id="pineapple-title" style="margin-top:0; color:#444;">Pineapple #???</h2>
+            <div class="img-container">
+                <img id="current-img" src="" alt="Loading pineapple...">
+            </div>
+            <p style="margin:0 0 10px; font-weight:bold; color:#666;">How pineapple is this pineapple?</p>
+            <div class="rating-grid">
+                <button class="rate-btn" onclick="submitVote(1)">1</button>
+                <button class="rate-btn" onclick="submitVote(2)">2</button>
+                <button class="rate-btn" onclick="submitVote(3)">3</button>
+                <button class="rate-btn" onclick="submitVote(4)">4</button>
+                <button class="rate-btn" onclick="submitVote(5)">5</button>
+                <button class="rate-btn" onclick="submitVote(6)">6</button>
+                <button class="rate-btn" onclick="submitVote(7)">7</button>
+                <button class="rate-btn" onclick="submitVote(8)">8</button>
+                <button class="rate-btn" onclick="submitVote(9)">9</button>
+                <button class="rate-btn" onclick="submitVote(10)">10</button>
+            </div>
+            <button class="close-btn" onclick="closeGame()">Close</button>
+        </div>
+    </div>
+
+    <div id="view-overlay" class="hidden">
+        <div class="game-card">
+            <h2 id="view-title" style="margin-top:0; color:#444;"></h2>
+            <div class="img-container">
+                <img id="view-img" src="" alt="Pineapple View">
+            </div>
+            <div id="view-stats" style="margin-bottom:20px; font-size:1.2rem;">
+                <span style="color:var(--pineapple-green); font-weight:bold;">Score: <span id="view-score"></span></span>
+                <span style="color:#888; font-size:0.9rem; margin-left:10px;">(<span id="view-votes"></span> votes)</span>
+            </div>
+            <button class="close-btn" onclick="closeView()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://plowkappobhtijindnds.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsb3drYXBwb2JodGlqaW5kbmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODAzNzEsImV4cCI6MjA4MjE1NjM3MX0.74LB8wzQhivYiSrWILiYX62AIbhe7NzvYk2KwnZIPEY';
+        const _db = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let currentPineappleId = null;
+
+        // PAGINATION STATE
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let lbLoading = false;
+
+        // ===========================================
+        // 🏆 PAGINATED LEADERBOARD
+        // ===========================================
+        
+        async function fetchLeaderboard() {
+            if (lbLoading) return;
+            lbLoading = true;
+            
+            const container = document.getElementById('lb-container');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const pageInfo = document.getElementById('page-info');
+
+            // Disable buttons while loading
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            container.innerHTML = "<div style='text-align:center; padding:20px; color:#888;'>Loading Page " + currentPage + "...</div>";
+
+            const offset = (currentPage - 1) * itemsPerPage;
+
+            // Fetch Batch
+            const { data, error } = await _db
+                .from('pineapples')
+                .select('*')
+                .gt('vote_count', 0)
+                .order('average_score', { ascending: false })
+                .order('vote_count', { ascending: false })
+                .range(offset, offset + itemsPerPage - 1);
+
+            if (error) {
+                console.error("DB Error:", error);
+                container.innerHTML = "<p style='text-align:center'>Error loading pineapples.</p>";
+                lbLoading = false;
+                return;
+            }
+
+            if (data.length === 0 && currentPage === 1) {
+                container.innerHTML = "<p style='text-align:center'>No votes yet. Be the first!</p>";
+                lbLoading = false;
+                return;
+            } else if (data.length === 0) {
+                currentPage--;
+                fetchLeaderboard();
+                return;
+            }
+
+            container.innerHTML = "";
+
+            data.forEach((p, index) => {
+                const globalRank = offset + index + 1;
+                const safeName = p.custom_name.replace(/'/g, "\\'");
+                const safeImg = p.image_url;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'lb-item';
+                itemDiv.onclick = () => openView(safeName, safeImg, p.average_score, p.vote_count);
+                
+                itemDiv.innerHTML = `
+                    <div class="lb-rank">${globalRank}</div>
+                    <img src="${p.image_url}" class="lb-img" loading="lazy">
+                    <div class="lb-info">
+                        <div class="lb-name">${p.custom_name}</div>
+                        <div class="lb-stats">${p.vote_count} votes</div>
+                    </div>
+                    <div class="lb-score">${p.average_score}</div>
+                `;
+                container.appendChild(itemDiv);
+            });
+
+            // Update Controls
+            pageInfo.innerText = "Page " + currentPage;
+            prevBtn.disabled = (currentPage === 1);
+            nextBtn.disabled = (data.length < itemsPerPage);
+            
+            lbLoading = false;
+        }
+
+        function nextPage() {
+            if(!document.getElementById('next-btn').disabled) {
+                currentPage++;
+                fetchLeaderboard();
+            }
+        }
+
+        function prevPage() {
+            if(currentPage > 1) {
+                currentPage--;
+                fetchLeaderboard();
+            }
+        }
+
+        // ===========================================
+        // 🔍 MAGNIFIED VIEW LOGIC
+        // ===========================================
+        function openView(name, imgUrl, score, votes) {
+            document.getElementById('view-title').innerText = name;
+            document.getElementById('view-img').src = imgUrl;
+            document.getElementById('view-score').innerText = score;
+            document.getElementById('view-votes').innerText = votes;
+            document.getElementById('view-overlay').classList.remove('hidden');
+        }
+
+        function closeView() {
+            document.getElementById('view-overlay').classList.add('hidden');
+        }
+
+        // ===========================================
+        // 🎮 VOTING GAME LOGIC
+        // ===========================================
+        function openGame() {
+            document.getElementById('game-overlay').classList.remove('hidden');
+            fetchRandomPineapple();
+        }
+
+        function closeGame() {
+            document.getElementById('game-overlay').classList.add('hidden');
+            fetchLeaderboard(); 
+        }
+
+        async function fetchRandomPineapple() {
+            const imgEl = document.getElementById('current-img');
+            const titleEl = document.getElementById('pineapple-title');
+            
+            imgEl.style.opacity = "0.5";
+            titleEl.innerText = "Hunting...";
+
+            const { count, error: countErr } = await _db
+                .from('pineapples')
+                .select('*', { count: 'exact', head: true });
+
+            if (countErr) return;
+
+            const randomOffset = Math.floor(Math.random() * count);
+
+            const { data, error } = await _db
+                .from('pineapples')
+                .select('*')
+                .range(randomOffset, randomOffset)
+                .limit(1);
+
+            if (data && data.length > 0) {
+                const p = data[0];
+                currentPineappleId = p.id;
+                
+                const tempImg = new Image();
+                tempImg.src = p.image_url;
+                tempImg.onload = () => {
+                    imgEl.src = p.image_url;
+                    imgEl.style.opacity = "1";
+                    titleEl.innerText = p.custom_name;
+                };
+            }
+        }
+
+        async function submitVote(score) {
+            if (!currentPineappleId) return;
+
+            document.getElementById('pineapple-title').innerText = "Voted! Loading next...";
+
+            const { error } = await _db.rpc('vote_for_pineapple', {
+                pineapple_id: currentPineappleId,
+                rating: score
+            });
+
+            if (error) {
+                alert("Vote failed: " + error.message);
+            } else {
+                fetchRandomPineapple();
+            }
+        }
+
+        // Initial Load
+        fetchLeaderboard();
+
+    </script>
+</body>
+</html>
