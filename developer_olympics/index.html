@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>10x Developer Olympics v7.1</title>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5235937512634331"
      crossorigin="anonymous"></script>
@@ -40,6 +40,8 @@
             align-items: center;
             justify-content: center;
             user-select: none;
+            /* Prevent scrolling on mobile while playing */
+            touch-action: none; 
         }
 
         /* CRT Scanline Effect */
@@ -79,8 +81,12 @@
         }
 
         #game-wrapper {
-            width: 800px;
+            width: 800px; /* Default PC Width */
             text-align: center;
+            /* Ensure it respects screen bounds */
+            max-width: 100%; 
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         h1 { font-size: 3rem; text-shadow: 0 0 15px var(--text-color); margin-bottom: 10px; }
@@ -176,8 +182,8 @@
         
         .share-btn {
             margin-top: 20px;
-            border-color: var(--accent-color); /* Optional: Makes it Pink to stand out */
-            color: var(--accent-color);        /* Optional: Makes text Pink */
+            border-color: var(--accent-color); 
+            color: var(--accent-color);       
         }
 
         #leaderboard-modal, #submit-modal {
@@ -190,6 +196,8 @@
             background: #111; border: 2px solid var(--text-color);
             padding: 30px; text-align: center; border-radius: 10px;
             box-shadow: 0 0 20px var(--text-color); width: 400px;
+            max-width: 90%; 
+            box-sizing: border-box;
         }
 
         #lb-list {
@@ -217,7 +225,7 @@
         .key-box.active { border-color: var(--text-color); color: var(--text-color); box-shadow: 0 0 10px var(--text-color); transform: scale(1.1); }
         .key-box.done { border-color: var(--accent-color); color: var(--accent-color); text-decoration: line-through; opacity: 0.5; }
 
-        .sudo-input { font-size: 2rem; color: var(--fail-color); margin-top: 20px; min-height: 40px; }
+        .sudo-input { font-size: 2rem; color: var(--fail-color); margin-top: 20px; min-height: 40px; word-break: break-all; }
         
         .binary-stream { font-size: 2.5rem; letter-spacing: 10px; font-weight: bold; word-break: break-all; max-width: 600px; }
         .binary-char { color: #555; transition: color 0.1s; }
@@ -235,6 +243,74 @@
         .shake { animation: shake 0.3s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
 
+
+        /* =========================================================================
+           📱 MOBILE RESPONSIVE OVERRIDES
+           ========================================================================= */
+        @media (max-width: 768px) {
+            /* 1. Fluid Widths */
+            #game-wrapper {
+                width: 100%;
+                padding: 10px;
+            }
+
+            h1 { font-size: 2rem; }
+            .subtitle { font-size: 0.8rem; margin-bottom: 20px; }
+
+            /* 2. Adjust Game Panel */
+            .game-panel {
+                padding: 15px;
+                min-height: 350px; 
+            }
+
+            /* 3. Keep 2 Columns, but optimize fit */
+            .menu-grid {
+                /* Explicitly enforce 2 equal columns */
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 8px;
+            }
+
+            .menu-btn {
+                /* Reduce padding/size to fit 2 buttons side-by-side */
+                padding: 10px 5px;
+                font-size: 0.9rem;
+                min-height: 80px; /* Ensure consistent height */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* 4. Fix Game Elements Scaling */
+            .big-text { font-size: 1.5rem; }
+            .timer { font-size: 2.2rem; }
+            .rank-display { font-size: 1.5rem; }
+
+            .key-box {
+                font-size: 1rem;
+                padding: 8px 10px;
+                margin: 3px;
+            }
+
+            .binary-stream {
+                font-size: 1.5rem;
+                letter-spacing: 3px;
+                max-width: 100%;
+            }
+
+            #sudo-target {
+                font-size: 1rem !important;
+                word-wrap: break-word;
+            }
+            .sudo-input { font-size: 1.2rem; }
+
+            /* 5. Modal Adjustments */
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+            .lb-nav { flex-wrap: wrap; }
+            .nav-btn { font-size: 0.7rem; padding: 5px; }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
