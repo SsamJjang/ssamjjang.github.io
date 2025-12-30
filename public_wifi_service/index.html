@@ -628,28 +628,61 @@
         function startNavigation() {
 			if (!selectedItem) return;
 			if (!currentPosition) {
-				alert("I need your location first! Click the target icon on the top right.");
+				alert("Click the target icon on the top right first.");
 				return;
 			}
 
-			// 1. Remove the straight line (since we can't draw real roads)
+			// 1. Clear any existing line
 			if (routePolyline) routePolyline.setMap(null);
 
 			const userLat = new kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
 			const destLat = new kakao.maps.LatLng(selectedItem.WGS84위도, selectedItem.WGS84경도);
 
-			// 2. Just zoom the map so both points are visible
+			// 2. Draw a "Direction Guide" Line (Dashed)
+			// We use a dashed line to indicate this is a "Direct Path" guide
+			routePolyline = new kakao.maps.Polyline({
+				path: [userLat, destLat], 
+				strokeWeight: 5,
+				strokeColor: '#3b82f6', 
+				strokeOpacity: 0.8,
+				strokeStyle: 'shortdash' 
+			});
+
+			routePolyline.setMap(map);
+
+			// 3. Zoom the map to show the whole path
 			const bounds = new kakao.maps.LatLngBounds();
 			bounds.extend(userLat);
 			bounds.extend(destLat);
-			
-			// Add some padding so markers aren't on the edge
-			map.setBounds(bounds, 100); 
+			map.setBounds(bounds, 80); // 80px padding around the edges
 
-			// 3. Update Button text
+			// 4. Calculate Distance (in meters)
+			// Simple Haversine approximation for display
+			const distMeters = Math.floor(getDistanceInMeters(
+				currentPosition.lat, currentPosition.lng, 
+				selectedItem.WGS84위도, selectedItem.WGS84경도
+			));
+
+			// 5. Update Button
 			const navBtn = document.getElementById('navBtn');
-			navBtn.innerHTML = '<span>Map Focused on Target</span>';
-			navBtn.style.background = '#6b7280';
+			navBtn.innerHTML = `<span>🏃‍♂️ ${distMeters}m to Destination</span>`;
+			navBtn.style.background = '#4f46e5'; // Indigo color to show active state
+		}
+
+		// Helper function for distance
+		function getDistanceInMeters(lat1, lon1, lat2, lon2) {
+			const R = 6371e3; // Earth radius in meters
+			const φ1 = lat1 * Math.PI/180;
+			const φ2 = lat2 * Math.PI/180;
+			const Δφ = (lat2-lat1) * Math.PI/180;
+			const Δλ = (lon2-lon1) * Math.PI/180;
+
+			const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+					Math.cos(φ1) * Math.cos(φ2) *
+					Math.sin(Δλ/2) * Math.sin(Δλ/2);
+			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+			return R * c;
 		}
 
     </script>
