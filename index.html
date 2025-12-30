@@ -261,6 +261,104 @@
             100% { clip-path: inset(0 0 0 0); transform: translate(0); }
         }
 
+        /* =========================================================
+        📡 WIFI MAP CARD (Cyber-Geography Theme)
+        ========================================================= */
+        #wifi-card {
+            /* Deep "Map Water" Blue Background */
+            background-color: #0f172a;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+            z-index: 1;
+            
+            /* The "Digital Grid" Background Pattern */
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        #wifi-card:hover {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+            border-color: #60a5fa;
+            transform: translateY(-5px) scale(1.02);
+        }
+
+        /* --- THE CSS ICON (Constructing a Signal Pin) --- */
+        /* We target .card-icon to draw the pin shape */
+        #wifi-card .card-icon {
+            width: 20px;
+            height: 20px;
+            background-color: #3b82f6;
+            border-radius: 50% 50% 50% 0; /* Tear-drop shape */
+            transform: rotate(-45deg); /* Rotated to look like a map pin */
+            margin-bottom: 25px;
+            position: relative;
+            box-shadow: 0 0 10px #3b82f6;
+        }
+
+        /* The white dot inside the pin */
+        #wifi-card .card-icon::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* --- THE RADAR WAVES (Pure CSS Animation) --- */
+        /* We use ::before on the icon to create the radiating waves */
+        #wifi-card .card-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid rgba(59, 130, 246, 0.8);
+            animation: signal-pulse 2s infinite ease-out;
+            z-index: -1; /* Behind the pin */
+        }
+
+        /* --- TEXT STYLING --- */
+        #wifi-card .card-title {
+            color: #eff6ff;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            z-index: 2;
+        }
+
+        #wifi-card .card-desc {
+            color: #93c5fd;
+            font-size: 0.85rem;
+            z-index: 2;
+        }
+
+        /* --- ANIMATION KEYFRAMES --- */
+        @keyframes signal-pulse {
+            0% {
+                width: 10px;
+                height: 10px;
+                opacity: 1;
+                border-width: 2px;
+            }
+            100% {
+                width: 80px; /* Expands outward */
+                height: 80px;
+                opacity: 0;
+                border-width: 0px;
+            }
+        }
+
         /* --- FOOTER --- */
         footer {
             margin-top: auto;
@@ -327,6 +425,13 @@
         // 🎨 CONFIGURATION: DEFINE YOUR BUTTONS
         // ==========================================
         const projectList = [
+            {
+                title: "Public Wifi Map",
+                desc: "Locate Free Wifi Spots in Incheon",
+                icon: "🗺️",
+                folder: "public_wifi_service",
+                id: "wifi-card", // UNIQUE ID for the Matrix effect
+            },
             {
                 title: "Pinpoint Pineapples",
                 desc: "Finding the Perfect Pineapple",

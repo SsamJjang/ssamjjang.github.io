@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Incheon Wi-Fi Map</title>
+    <link rel="stylesheet" href="style.css">
+	<style>
+		:root {
+			--primary: #3b82f6;
+			--primary-dark: #2563eb;
+			--text-main: #1f2937;
+			--text-sub: #6b7280;
+			--bg-glass: rgba(255, 255, 255, 0.85);
+			--shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+			--radius: 16px;
+		}
+
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+
+		body, html {
+			height: 100%;
+			width: 100%;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+			color: var(--text-main);
+			overflow: hidden; /* Prevent scroll on mobile */
+		}
+
+		.app-container {
+			position: relative;
+			width: 100%;
+			height: 100%;
+		}
+
+		/* Map takes full space */
+		#map {
+			width: 100%;
+			height: 100%;
+			z-index: 1;
+		}
+
+		/* --- Glass Panels (Header & Bottom) --- */
+		.glass-panel {
+			background: var(--bg-glass);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+			border: 1px solid rgba(255, 255, 255, 0.5);
+			box-shadow: var(--shadow);
+			z-index: 10;
+			position: absolute;
+		}
+
+		/* Header */
+		.top-bar {
+			top: 16px;
+			left: 16px;
+			right: 16px;
+			height: 64px;
+			border-radius: var(--radius);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0 16px;
+			max-width: 600px;
+			margin: 0 auto; /* Center on desktop */
+		}
+
+		.brand {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.logo-icon {
+			width: 36px;
+			height: 36px;
+			background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+			color: white;
+			border-radius: 10px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-weight: 800;
+			font-size: 18px;
+		}
+
+		.brand-text h1 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+		.brand-text .subtitle { font-size: 12px; color: var(--text-sub); display: block; }
+
+		.icon-btn {
+			background: transparent;
+			border: none;
+			color: var(--primary);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2px;
+			cursor: pointer;
+			font-size: 11px;
+			font-weight: 600;
+		}
+		.icon-btn svg { width: 24px; height: 24px; }
+
+		/* Bottom Panel */
+		.bottom-panel {
+			bottom: 20px;
+			left: 20px;
+			right: 20px;
+			border-radius: var(--radius);
+			padding: 16px;
+			max-width: 400px;
+			/* On desktop, keep it to the left or right? Let's keep it simple floating bottom-center or left */
+			max-height: 40vh;
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+		}
+
+		@media (min-width: 768px) {
+			.bottom-panel {
+				left: 20px;
+				right: auto;
+				width: 360px;
+				bottom: 20px;
+			}
+			.top-bar {
+				left: 20px;
+				right: auto;
+				width: 360px;
+			}
+		}
+
+		.panel-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			font-size: 13px;
+			color: var(--text-sub);
+			border-bottom: 1px solid rgba(0,0,0,0.05);
+			padding-bottom: 8px;
+		}
+
+		.primary-btn {
+			background: var(--primary);
+			color: white;
+			border: none;
+			padding: 6px 12px;
+			border-radius: 20px;
+			font-size: 12px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background 0.2s;
+		}
+		.primary-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+		.primary-btn:hover:not(:disabled) { background: var(--primary-dark); }
+
+		/* Info Card */
+		.info-card.hidden { display: none; }
+		.info-card {
+			background: white;
+			border-radius: 12px;
+			padding: 16px;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+			animation: slideUp 0.3s ease;
+		}
+
+		@keyframes slideUp {
+			from { opacity: 0; transform: translateY(10px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+
+		.card-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-start;
+			margin-bottom: 8px;
+		}
+		.card-header h3 { font-size: 18px; font-weight: 700; color: var(--text-main); }
+		.close-btn { background: none; border: none; font-size: 24px; color: #9ca3af; cursor: pointer; line-height: 1; }
+
+		.card-body p { font-size: 14px; color: #4b5563; margin-bottom: 12px; line-height: 1.4; }
+
+		.tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+		.tag {
+			font-size: 11px; padding: 4px 8px;
+			background: #e0f2fe; color: #0369a1;
+			border-radius: 6px; font-weight: 600;
+		}
+		.tag.secondary { background: #f3f4f6; color: #374151; }
+
+		.action-btn {
+			width: 100%;
+			padding: 12px;
+			background: #10b981; /* Green for navigation */
+			color: white;
+			border: none;
+			border-radius: 10px;
+			font-weight: 600;
+			font-size: 14px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+		}
+		.action-btn:hover { background: #059669; }
+
+		/* Custom Markers */
+		.cluster-marker {
+			background: rgba(59, 130, 246, 0.9);
+			color: white;
+			border-radius: 50%;
+			text-align: center;
+			font-weight: bold;
+			font-size: 14px;
+			box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+			border: 2px solid white;
+			cursor: pointer;
+			animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+		}
+
+		.user-marker-pulse {
+			width: 20px;
+			height: 20px;
+			background: #ef4444;
+			border: 3px solid white;
+			border-radius: 50%;
+			box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+			animation: pulse 2s infinite;
+		}
+
+		@keyframes pulse {
+			0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+			70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+			100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+		}
+
+		@keyframes popIn {
+			from { transform: scale(0); }
+			to { transform: scale(1); }
+		}
+	</style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="glass-panel top-bar">
+            <div class="brand">
+                <div class="logo-icon">Wi</div>
+                <div class="brand-text">
+                    <h1>Incheon Wi-Fi Map</h1>
+                    <span class="subtitle">Incheon Public Wi-Fi</span>
+                </div>
+            </div>
+            <div class="actions">
+                <button id="locBtn" class="icon-btn" title="내 위치 찾기">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                    <span>My location</span>
+                </button>
+            </div>
+        </header>
+
+        <div id="map"></div>
+
+        <div class="glass-panel bottom-panel">
+            <div class="panel-header">
+                <div id="statusMsg">Fetching map...</div>
+                <div class="panel-controls">
+                    <button id="nearestBtn" class="primary-btn" disabled>Find closest WIFI</button>
+                </div>
+            </div>
+            <div id="infoCard" class="info-card hidden">
+                <div class="card-header">
+                    <h3 id="cardTitle">-</h3>
+                    <button id="closeCardBtn" class="close-btn">&times;</button>
+                </div>
+                <div class="card-body">
+                    <p id="cardAddr">-</p>
+                    <div class="tags" id="cardTags"></div>
+                </div>
+                <div class="card-footer">
+                    <button id="navBtn" class="action-btn">
+                        Navigate (Kakao Map)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=dd888f5caa8f6ab1d90a30be710885be&autoload=false"></script>
+    
+    <script>
+        // --- Global State ---
+        let map = null;
+        let userMarker = null;
+        let currentPosition = null; // {lat, lng}
+        let wifiData = [];
+        let markers = []; // All marker objects
+        let clusterOverlays = []; // Cluster custom overlays
+        let selectedItem = null; // Currently selected wifi data item
+
+        // --- Config ---
+        const CLUSTER_DISTANCE = 80; // Pixels distance to group markers
+
+        // --- Entry Point ---
+        kakao.maps.load(function() {
+            initMap();
+            fetchData();
+        });
+
+        function initMap() {
+            const container = document.getElementById('map');
+            const options = {
+                center: new kakao.maps.LatLng(37.4562557, 126.7052062), // Incheon City Hall default
+                level: 9
+            };
+            map = new kakao.maps.Map(container, options);
+            
+            // Map event listeners for clustering
+            kakao.maps.event.addListener(map, 'zoom_changed', updateClusters);
+            kakao.maps.event.addListener(map, 'dragend', updateClusters);
+
+            document.getElementById('statusMsg').innerText = "Fetching data...";
+        }
+
+        function fetchData() {
+			// 1. Determine the correct path based on where the user is currently located.
+			// If the current URL includes 'public_wifi_service', we are inside the folder -> use 'data.json'
+			// If NOT, we are likely at the Root -> use 'public_wifi_service/data.json'
+			
+			const isInsideFolder = window.location.pathname.includes('public_wifi_service');
+			const dataPath = isInsideFolder ? 'data.json' : 'public_wifi_service/data.json';
+
+			console.log("Attempting to fetch data from:", dataPath);
+
+			fetch(dataPath)
+				.then(res => {
+					if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+					return res.json();
+				})
+				.then(data => {
+					wifiData = data.filter(item => item.WGS84위도 && item.WGS84경도);
+					console.log(`Loaded ${wifiData.length} valid spots.`);
+					document.getElementById('statusMsg').innerText = `Found ${wifiData.length} WIFI spots.`;
+					document.getElementById('nearestBtn').disabled = false;
+					
+					updateClusters();
+				})
+				.catch(err => {
+					console.error("Data load failed:", err);
+					// Fallback: Try the other path just in case
+					if (dataPath === 'data.json') {
+						console.log("Retrying with root path...");
+						// Only retry once to avoid infinite loops logic here for simplicity
+						// ideally you just ensure the path above is correct.
+					}
+					document.getElementById('statusMsg').innerText = "Failed to load data. Check console.";
+				});
+		}
+
+        // --- Clustering Logic (Grouping) ---
+        function updateClusters() {
+            if (!map || wifiData.length === 0) return;
+
+            // Clear existing
+            clearMapObjects();
+
+            // Get map bounds
+            const bounds = map.getBounds();
+            const sw = bounds.getSouthWest();
+            const ne = bounds.getNorthEast();
+
+            // Simple clustering logic
+            // 1. Filter points in view (plus some padding) to optimize
+            // 2. Group points that are close to each other in pixel coordinates
+            
+            const projection = map.getProjection();
+            const clusters = []; // { centerPoint: LatLng, items: [] }
+
+            // Helper to get pixel position
+            const getPixel = (lat, lng) => {
+                return projection.containerPointFromCoords(new kakao.maps.LatLng(lat, lng));
+            };
+
+            // Optimization: Iterate only logic
+            // To keep it simple and robust without external libraries:
+            // We greedily pick a point, make it a cluster center, and find all neighbors within distance.
+            
+            // Clone data to process
+            let remainingPoints = wifiData.map(d => ({
+                ...d,
+                _latlng: new kakao.maps.LatLng(d.WGS84위도, d.WGS84경도),
+                _pixel: getPixel(d.WGS84위도, d.WGS84경도)
+            }));
+
+            // Filter out points far outside bounds (optional optimization)
+            // Skip for now to ensure smoothness, dataset is < 2000 items so it's fine.
+
+            while (remainingPoints.length > 0) {
+                const center = remainingPoints.pop();
+                const cluster = {
+                    centerItem: center,
+                    items: [center]
+                };
+
+                // Find neighbors
+                const nextRemaining = [];
+                for (const p of remainingPoints) {
+                    const dist = Math.sqrt(
+                        Math.pow(center._pixel.x - p._pixel.x, 2) + 
+                        Math.pow(center._pixel.y - p._pixel.y, 2)
+                    );
+                    
+                    if (dist <= CLUSTER_DISTANCE) {
+                        cluster.items.push(p);
+                    } else {
+                        nextRemaining.push(p);
+                    }
+                }
+                remainingPoints = nextRemaining;
+                clusters.push(cluster);
+            }
+
+            renderClusters(clusters);
+        }
+
+        function renderClusters(clusters) {
+            clusters.forEach(cluster => {
+                if (cluster.items.length === 1) {
+                    // Render single marker
+                    const item = cluster.items[0];
+                    const marker = new kakao.maps.Marker({
+                        position: item._latlng,
+                        map: map
+                    });
+                    
+                    kakao.maps.event.addListener(marker, 'click', () => {
+                        selectSpot(item);
+                    });
+                    markers.push(marker);
+
+                } else {
+                    // Render cluster circle
+                    const content = `<div class="cluster-marker" style="
+                        width: ${30 + Math.min(cluster.items.length, 20)}px; 
+                        height: ${30 + Math.min(cluster.items.length, 20)}px;
+                        line-height: ${30 + Math.min(cluster.items.length, 20)}px;">
+                        ${cluster.items.length}
+                    </div>`;
+
+                    const overlay = new kakao.maps.CustomOverlay({
+                        position: cluster.centerItem._latlng,
+                        content: content,
+                        clickable: true
+                    });
+                    
+                    overlay.setMap(map);
+                    clusterOverlays.push(overlay);
+
+                    // Click on cluster -> Zoom in
+                    const div = document.createElement('div'); // Dummy for event binding logic if needed
+                    // Note: Kakao CustomOverlay content is HTML string. 
+                    // To add events easily, we rely on the DOM bubbling or simplified logic.
+                    // For this simple revamp, we assume zooming is manual or we set the map level.
+                    // Let's add a click listener to the DOM element after it's rendered? 
+                    // Easier method: Use the content string to invoke a global function or just let user zoom.
+                    // We'll let the user zoom for now, or the user clicks standard markers.
+                }
+            });
+        }
+
+        function clearMapObjects() {
+            markers.forEach(m => m.setMap(null));
+            markers = [];
+            clusterOverlays.forEach(o => o.setMap(null));
+            clusterOverlays = [];
+        }
+
+        // --- Interaction ---
+        function selectSpot(item) {
+            selectedItem = item;
+            const pos = new kakao.maps.LatLng(item.WGS84위도, item.WGS84경도);
+            map.panTo(pos);
+
+            // Update UI
+            document.getElementById('infoCard').classList.remove('hidden');
+            document.getElementById('cardTitle').innerText = item.설치장소명;
+            document.getElementById('cardAddr').innerText = item.소재지도로명주소 || item.소재지지번주소 || 'N/A';
+            
+            const tags = document.getElementById('cardTags');
+            tags.innerHTML = '';
+            if(item.설치시설구분) tags.innerHTML += `<span class="tag">${item.설치시설구분}</span>`;
+            if(item.관리기관명) tags.innerHTML += `<span class="tag secondary">${item.관리기관명}</span>`;
+
+            document.getElementById('statusMsg').innerText = "Selected: " + item.설치장소명;
+        }
+
+        document.getElementById('closeCardBtn').addEventListener('click', () => {
+            document.getElementById('infoCard').classList.add('hidden');
+            selectedItem = null;
+        });
+
+        // --- User Location ---
+        document.getElementById('locBtn').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                document.getElementById('statusMsg').innerText = "Fetching your location...";
+                navigator.geolocation.getCurrentPosition(position => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    currentPosition = { lat, lng };
+                    
+                    const locPosition = new kakao.maps.LatLng(lat, lng);
+                    
+                    if (userMarker) userMarker.setMap(null);
+                    
+                    // Custom user marker image or overlay
+                    const content = '<div class="user-marker-pulse"></div>';
+                    userMarker = new kakao.maps.CustomOverlay({
+                        position: locPosition,
+                        content: content
+                    });
+                    userMarker.setMap(map);
+                    map.setCenter(locPosition);
+                    map.setLevel(7); // Zoom in closer
+                    document.getElementById('statusMsg').innerText = "Moved to your location.";
+                    
+                    updateClusters(); // Re-render logic if needed based on viewport
+
+                }, () => {
+                    alert("Unable to fetch your location.");
+                });
+            } else {
+                alert("Unable to fetch your location on this browser.");
+            }
+        });
+
+        // --- Nearest Spot ---
+        document.getElementById('nearestBtn').addEventListener('click', () => {
+            if (!currentPosition) {
+                alert("Please press the 'My Location' button first.");
+                return;
+            }
+            if (wifiData.length === 0) return;
+
+            // Find closest
+            let minDst = Infinity;
+            let closest = null;
+
+            wifiData.forEach(item => {
+                // Simple Euclidean is enough for short distances sorting, strictly Haversine is better but this is fast
+                const latDiff = item.WGS84위도 - currentPosition.lat;
+                const lngDiff = item.WGS84경도 - currentPosition.lng;
+                const distSq = latDiff*latDiff + lngDiff*lngDiff;
+                if (distSq < minDst) {
+                    minDst = distSq;
+                    closest = item;
+                }
+            });
+
+            if (closest) {
+                selectSpot(closest);
+                // Zoom closely to show route context implies being somewhat near
+                map.setLevel(5); 
+                map.panTo(new kakao.maps.LatLng(closest.WGS84위도, closest.WGS84경도));
+                alert(`Closest WIFI: ${closest.설치장소명}`);
+            }
+        });
+
+        // --- Navigation ---
+        document.getElementById('navBtn').addEventListener('click', () => {
+            if (!selectedItem) return;
+            // Open Kakao Map directions
+            // URL Format: https://map.kakao.com/link/to/DestName,lat,lng
+            const url = `https://map.kakao.com/link/to/${selectedItem.설치장소명},${selectedItem.WGS84위도},${selectedItem.WGS84경도}`;
+            window.open(url, '_blank');
+        });
+
+    </script>
+</body>
+</html>
