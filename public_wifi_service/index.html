@@ -478,33 +478,34 @@
              });
         }
 
-        function createSingleMarker(item) {
-            // Using a Custom Overlay for the pin allows cooler CSS styling than standard Markers
-            const content = `<div class="wifi-marker" onclick="triggerSelect('${item.설치장소명}')">📡</div>`;
-            
-            const overlay = new kakao.maps.CustomOverlay({
-                position: item._latlng,
-                content: content,
-                yAnchor: 1 // Bottom align
-            });
-            
-            // We need a way to link the click. 
-            // Since string HTML can't easily reference objects, we attach the item to the DOM element after creation?
-            // Easier: Attach a click event to a standard invisible marker behind it, OR use global lookup.
-            // Let's use a standard Invisible Marker for click detection to be robust.
-            
-            const clickMarker = new kakao.maps.Marker({
-                position: item._latlng,
-                opacity: 0 // Invisible, just for clicking
-            });
-            
-            kakao.maps.event.addListener(clickMarker, 'click', () => selectSpot(item));
-            clickMarker.setMap(map);
-            markers.push(clickMarker);
+        window.triggerSelect = function(lat, lng) {
+			// Find the item with matching coordinates
+			const item = wifiData.find(d => d.WGS84위도 == lat && d.WGS84경도 == lng);
+			if (item) {
+				selectSpot(item);
+			}
+		};
 
-            overlay.setMap(map);
-            clusterOverlays.push(overlay); // We treat custom pins as overlays for cleanup
-        }
+		// 2. REPLACE your createSingleMarker function
+		function createSingleMarker(item) {
+			// We pass coordinates to the function so it knows which item to pick
+			const content = `
+				<div class="wifi-marker" 
+					onclick="window.triggerSelect(${item.WGS84위도}, ${item.WGS84경도})">
+					📡
+				</div>`;
+			
+			// Create the CustomOverlay
+			const overlay = new kakao.maps.CustomOverlay({
+				position: item._latlng,
+				content: content,
+				yAnchor: 1,
+				zIndex: 3 // Force it above other elements
+			});
+			
+			overlay.setMap(map);
+			clusterOverlays.push(overlay);
+		}
 
         function clearMapObjects() {
             markers.forEach(m => m.setMap(null));
@@ -625,40 +626,31 @@
         document.getElementById('navBtn').addEventListener('click', startNavigation);
 
         function startNavigation() {
-            if (!selectedItem) return;
-            if (!currentPosition) {
-                alert("I need your location first! Click the target icon on the top right.");
-                return;
-            }
+			if (!selectedItem) return;
+			if (!currentPosition) {
+				alert("I need your location first! Click the target icon on the top right.");
+				return;
+			}
 
-            // 1. Clear old lines
-            if (routePolyline) routePolyline.setMap(null);
+			// 1. Remove the straight line (since we can't draw real roads)
+			if (routePolyline) routePolyline.setMap(null);
 
-            const userLat = new kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
-            const destLat = new kakao.maps.LatLng(selectedItem.WGS84위도, selectedItem.WGS84경도);
+			const userLat = new kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
+			const destLat = new kakao.maps.LatLng(selectedItem.WGS84위도, selectedItem.WGS84경도);
 
-            // 2. Draw the visual guide line (Polyline)
-            routePolyline = new kakao.maps.Polyline({
-                path: [userLat, destLat], 
-                strokeWeight: 6,
-                strokeColor: '#3b82f6', // Blue
-                strokeOpacity: 0.8,
-                strokeStyle: 'shortdash' // Dashed line looks like a "guide"
-            });
+			// 2. Just zoom the map so both points are visible
+			const bounds = new kakao.maps.LatLngBounds();
+			bounds.extend(userLat);
+			bounds.extend(destLat);
+			
+			// Add some padding so markers aren't on the edge
+			map.setBounds(bounds, 100); 
 
-            routePolyline.setMap(map);
-
-            // 3. Zoom map to fit both points
-            const bounds = new kakao.maps.LatLngBounds();
-            bounds.extend(userLat);
-            bounds.extend(destLat);
-            map.setBounds(bounds);
-
-            // 4. Update Button text to show active state
-            const navBtn = document.getElementById('navBtn');
-            navBtn.innerHTML = '<span>Select another spot to end</span>';
-            navBtn.style.background = '#6b7280'; // Grey out
-        }
+			// 3. Update Button text
+			const navBtn = document.getElementById('navBtn');
+			navBtn.innerHTML = '<span>Map Focused on Target</span>';
+			navBtn.style.background = '#6b7280';
+		}
 
     </script>
 </body>
