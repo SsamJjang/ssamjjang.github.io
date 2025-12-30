@@ -4,218 +4,249 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Public WIFI Map</title>
-    <link rel="stylesheet" href="style.css"> 
-	<style>
-		:root {
-			--primary: #3b82f6;
-			--primary-dark: #2563eb;
-			--text-main: #1f2937;
-			--text-sub: #6b7280;
-			--bg-glass: rgba(255, 255, 255, 0.9);
-			--shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-			--radius: 24px;
-		}
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --bg-glass: rgba(255, 255, 255, 0.9);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --radius: 24px;
+        }
 
-		* { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-		body, html {
-			height: 100%;
-			width: 100%;
-			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-			color: var(--text-main);
-			overflow: hidden; 
-		}
+        body, html {
+            height: 100%;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-main);
+            overflow: hidden; 
+            background-color: #f3f4f6;
+        }
 
-		.app-container {
-			position: relative;
-			width: 100%;
-			height: 100%;
-		}
+        .app-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
 
-		#map {
-			width: 100%;
-			height: 100%;
-			z-index: 1;
-		}
+        /* MAP CONTAINER */
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            /* CRITICAL FIX FOR MOBILE: Prevents browser scrolling/zooming so map gets the events */
+            touch-action: none; 
+        }
 
-		/* GLASS PANELS */
-		.glass-panel {
-			background: var(--bg-glass);
-			backdrop-filter: blur(12px);
-			-webkit-backdrop-filter: blur(12px);
-			border: 1px solid rgba(255, 255, 255, 0.6);
-			box-shadow: var(--shadow);
-			z-index: 10;
-			position: absolute;
-			border-radius: var(--radius);
-		}
+        /* GLASS PANELS SHARED STYLES */
+        .glass-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: var(--shadow);
+            z-index: 10;
+            position: absolute;
+            transition: all 0.3s ease;
+        }
 
-		/* TOP BAR */
-		.top-bar {
-			top: 20px;
-			left: 20px;
-			right: 20px;
-			height: 70px;
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			padding: 0 20px;
-			max-width: 500px;
-			margin: 0 auto; 
+        /* TOP BAR */
+        .top-bar {
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            max-width: 500px;
+            margin: 0 auto; 
+            border-radius: var(--radius);
             pointer-events: auto;
-		}
+        }
 
-		.brand {
-			display: flex;
-			align-items: center;
-			gap: 12px;
-		}
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-		.logo-icon {
-			width: 40px;
-			height: 40px;
-			background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-			color: white;
-			border-radius: 12px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			font-weight: 800;
-			font-size: 20px;
-			box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
-		}
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
 
-		.brand-text h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-		.brand-text .subtitle { font-size: 12px; color: var(--text-sub); font-weight: 500;}
+        .brand-text h1 { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; }
+        .brand-text .subtitle { font-size: 11px; color: var(--text-sub); font-weight: 500;}
 
-		.icon-btn {
-			background: white;
-			border: 1px solid #e5e7eb;
-			border-radius: 12px;
-			width: 44px;
-			height: 44px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			color: var(--primary);
-			cursor: pointer;
-			transition: all 0.2s;
+        .icon-btn {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-		}
+        }
         .icon-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-		.icon-btn svg { width: 20px; height: 20px; }
+        .icon-btn svg { width: 20px; height: 20px; }
 
-		/* BOTTOM PANEL */
-		.bottom-panel {
-			bottom: 30px;
-			left: 50%;
-			transform: translateX(-50%);
-			width: 90%;
-			max-width: 420px;
-			padding: 20px;
-			display: flex;
-			flex-direction: column;
-			gap: 15px;
+        /* BOTTOM PANEL */
+        .bottom-panel {
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 420px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-radius: var(--radius);
             pointer-events: auto;
-		}
+        }
 
-		.panel-header {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			font-size: 14px;
-			color: var(--text-sub);
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-sub);
             padding-bottom: 10px;
             border-bottom: 1px solid rgba(0,0,0,0.05);
-		}
+        }
 
-		.primary-btn {
-			background: var(--primary);
-			color: white;
-			border: none;
-			padding: 8px 16px;
-			border-radius: 50px;
-			font-size: 13px;
-			font-weight: 700;
-			cursor: pointer;
-			transition: background 0.2s;
+        .primary-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
             box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
-		}
-		.primary-btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
-		.primary-btn:hover:not(:disabled) { background: var(--primary-dark); transform: scale(1.02); }
+            white-space: nowrap;
+        }
+        .primary-btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+        .primary-btn:hover:not(:disabled) { background: var(--primary-dark); transform: scale(1.02); }
 
-		/* INFO CARD */
-		.info-card.hidden { display: none; }
-		.info-card {
+        /* INFO CARD */
+        .info-card.hidden { display: none; }
+        .info-card {
             margin-top: 5px;
-			animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-		}
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-		@keyframes slideUp {
-			from { opacity: 0; transform: translateY(20px); }
-			to { opacity: 1; transform: translateY(0); }
-		}
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-		.card-header {
-			display: flex;
-			justify-content: space-between;
-			align-items: flex-start;
-			margin-bottom: 10px;
-		}
-		.card-header h3 { font-size: 20px; font-weight: 800; color: var(--text-main); line-height: 1.2; }
-		.close-btn { background: none; border: none; font-size: 28px; color: #9ca3af; cursor: pointer; }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .card-header h3 { font-size: 18px; font-weight: 800; color: var(--text-main); line-height: 1.2; }
+        .close-btn { background: none; border: none; font-size: 24px; color: #9ca3af; cursor: pointer; padding: 0 5px; }
 
-		.card-body p { font-size: 15px; color: #4b5563; margin-bottom: 15px; line-height: 1.5; }
+        .card-body p { font-size: 14px; color: #4b5563; margin-bottom: 15px; line-height: 1.5; }
 
-		.tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-		.tag {
-			font-size: 12px; padding: 6px 12px;
-			background: #eff6ff; color: #2563eb;
-			border-radius: 8px; font-weight: 700;
-		}
-		.tag.secondary { background: #f3f4f6; color: #4b5563; }
+        .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .tag {
+            font-size: 11px; padding: 5px 10px;
+            background: #eff6ff; color: #2563eb;
+            border-radius: 8px; font-weight: 700;
+        }
+        .tag.secondary { background: #f3f4f6; color: #4b5563; }
 
-		.action-btn {
-			width: 100%;
-			padding: 14px;
-			background: #10b981; 
-			color: white;
-			border: none;
-			border-radius: 14px;
-			font-weight: 700;
-			font-size: 15px;
-			cursor: pointer;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 10px;
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            background: #10b981; 
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
             transition: transform 0.2s;
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-		}
-		.action-btn:hover { background: #059669; transform: scale(1.02); }
+        }
+        .action-btn:hover { background: #059669; transform: scale(1.02); }
 
-		/* MARKERS */
-        /* Grouped Cluster */
-		.cluster-marker {
-			background: rgba(59, 130, 246, 0.95);
-			color: white;
-			border-radius: 50%;
-			text-align: center;
-			font-weight: 800;
-			font-size: 14px;
-			box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
-			border: 3px solid white;
-			cursor: pointer;
-			animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        /* --- MOBILE OPTIMIZATIONS --- */
+        @media (max-width: 600px) {
+            .top-bar {
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                max-width: none;
+                border-radius: 0 0 20px 20px;
+                height: 70px;
+                padding-top: env(safe-area-inset-top, 10px); /* Handle iPhone Notch */
+            }
+
+            .bottom-panel {
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                max-width: none;
+                border-radius: 24px 24px 0 0;
+                transform: none;
+                padding-bottom: calc(20px + env(safe-area-inset-bottom, 10px));
+            }
+        }
+
+        /* MARKERS */
+        .cluster-marker {
+            background: rgba(59, 130, 246, 0.95);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            font-weight: 800;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
+            border: 3px solid white;
+            cursor: pointer;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex; 
             align-items: center; 
             justify-content: center;
-		}
+        }
 
-        /* Single Wifi Spot */
         .wifi-marker {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             background: white;
             border-radius: 50%;
             display: flex;
@@ -224,21 +255,19 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             border: 2px solid #3b82f6;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 16px;
             transition: transform 0.2s;
         }
-        .wifi-marker:hover { transform: scale(1.1); z-index: 999; }
-
-        /* User Location */
-		.user-marker-pulse {
-			width: 24px;
-			height: 24px;
-			background: #ef4444;
-			border: 4px solid white;
-			border-radius: 50%;
-			box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        
+        .user-marker-pulse {
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
             position: relative;
-		}
+        }
         .user-marker-pulse::after {
             content: '';
             position: absolute;
@@ -250,12 +279,12 @@
             animation: pulse 2s infinite;
         }
 
-		@keyframes pulse {
-			0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-			100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
-		}
-		@keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-	</style>
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+        }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -263,8 +292,8 @@
             <div class="brand">
                 <div class="logo-icon">Wi</div>
                 <div class="brand-text">
-                    <h1>Public WIFI Map</h1>
-                    <span class="subtitle">Free Public Wifis</span>
+                    <h1>Public WIFI</h1>
+                    <span class="subtitle">Free & Fast</span>
                 </div>
             </div>
             <div class="actions">
@@ -278,19 +307,19 @@
 
         <div class="glass-panel bottom-panel">
             <div class="panel-header">
-                <div id="statusMsg">Connecting to satellite...</div>
+                <div id="statusMsg">Initializing...</div>
                 <div class="panel-controls">
-                    <button id="nearestBtn" class="primary-btn" disabled>📍 Nearest Spot</button>
+                    <button id="nearestBtn" class="primary-btn" disabled>📍 Find Nearest</button>
                 </div>
             </div>
 
             <div id="infoCard" class="info-card hidden">
                 <div class="card-header">
-                    <h3 id="cardTitle">Wifi Spot Name</h3>
+                    <h3 id="cardTitle">Spot Name</h3>
                     <button id="closeCardBtn" class="close-btn">&times;</button>
                 </div>
                 <div class="card-body">
-                    <p id="cardAddr">Incheon, South Korea</p>
+                    <p id="cardAddr">Address info...</p>
                     <div class="tags" id="cardTags"></div>
                 </div>
                 <div class="card-footer">
@@ -305,21 +334,15 @@
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=dd888f5caa8f6ab1d90a30be710885be&autoload=false"></script>
     
     <script>
-        // --- Global State ---
         let map = null;
         let userMarker = null;
-        let currentPosition = null; // {lat, lng}
+        let currentPosition = null; 
         let wifiData = [];
-        
-        let markers = [];        // Stores single markers
-        let clusterOverlays = []; // Stores the "circle" overlays
-        let routePolyline = null; // Stores the navigation line
-        
+        let clusterOverlays = []; 
         let selectedItem = null;
 
-        const CLUSTER_DISTANCE = 80; // Distance in pixels to group items
+        const CLUSTER_DISTANCE = 80; 
 
-        // --- Entry Point ---
         kakao.maps.load(function() {
             initMap();
             fetchData();
@@ -328,76 +351,72 @@
         function initMap() {
             const container = document.getElementById('map');
             const options = {
-                center: new kakao.maps.LatLng(37.4562557, 126.7052062), // Incheon City Hall
+                center: new kakao.maps.LatLng(37.4562557, 126.7052062), 
                 level: 9 
             };
             map = new kakao.maps.Map(container, options);
             
-            // Listener: Update clusters when moving or zooming
+            // Re-enable dragging explicitly (Just in case)
+            map.setDraggable(true);
+            map.setZoomable(true);
+            
             kakao.maps.event.addListener(map, 'zoom_changed', updateClusters);
             kakao.maps.event.addListener(map, 'dragend', updateClusters);
-
-            document.getElementById('statusMsg').innerText = "Downloading map data...";
         }
 
         function fetchData() {
-            // Smart Path Detection for GitHub Pages vs Localhost
-			const isInsideFolder = window.location.pathname.includes('public_wifi_service');
-			const dataPath = isInsideFolder ? 'data.json' : 'public_wifi_service/data.json';
+            // Check paths for github pages vs local
+            const isInsideFolder = window.location.pathname.includes('public_wifi_service');
+            const dataPath = isInsideFolder ? 'data.json' : 'public_wifi_service/data.json';
 
-			fetch(dataPath)
-				.then(res => {
-					if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-					return res.json();
-				})
-				.then(data => {
-					wifiData = data.filter(item => item.WGS84위도 && item.WGS84경도);
-					document.getElementById('statusMsg').innerText = `${wifiData.length} spots online.`;
-					document.getElementById('nearestBtn').disabled = false;
-					updateClusters();
-				})
-				.catch(err => {
-					console.error("Data load failed:", err);
-                    // Fallback try
-					if (dataPath === 'data.json') { /* retry logic could go here */ }
-					document.getElementById('statusMsg').innerText = "Data error. Check console.";
-				});
-		}
+            // Try loading data
+            fetch(dataPath)
+                .then(res => {
+                    if (!res.ok) {
+                         // Fallback for simple local structures
+                         return fetch('data.json').then(r => r.json());
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    wifiData = data.filter(item => item.WGS84위도 && item.WGS84경도);
+                    document.getElementById('statusMsg').innerText = `${wifiData.length} spots ready.`;
+                    document.getElementById('nearestBtn').disabled = false;
+                    updateClusters();
+                })
+                .catch(err => {
+                    console.error("Data load failed:", err);
+                    document.getElementById('statusMsg').innerText = "Load failed.";
+                });
+        }
 
-        // --- INTELLIGENT CLUSTERING ---
         function updateClusters() {
             if (!map || wifiData.length === 0) return;
+            
+            // Clear existing
+            clusterOverlays.forEach(o => o.setMap(null));
+            clusterOverlays = [];
 
-            // 1. Clear everything
-            clearMapObjects();
-
-            // 2. CHECK ZOOM LEVEL
-            // Kakao Map: Level 1 is CLOSEST, Level 14 is FARTHEST.
             const currentLevel = map.getLevel();
             
-            // 🔥 FIX: If we are zoomed in (Level 4 or less), STOP clustering.
-            // Show every single point so they separate.
+            // If zoomed in (Level 4 or less), show ALL markers
             if (currentLevel <= 4) {
                 renderAllVisiblePoints();
                 return;
             }
 
-            // 3. Normal Clustering Logic (for zoomed out views)
+            // Otherwise, do clustering
+            const bounds = map.getBounds();
             const projection = map.getProjection();
-            if (!projection) return; // Map not fully ready
+            if (!projection) return;
 
-            // Helper: LatLng -> Pixels
             const getPixel = (lat, lng) => 
                 projection.containerPointFromCoords(new kakao.maps.LatLng(lat, lng));
 
-            // Only process data currently somewhat near the viewport (optimization)
-            const bounds = map.getBounds();
-            
-            // Create a working copy
-            let remainingPoints = wifiData.filter(d => {
+            // Optimization: Only cluster points inside viewport + buffer
+            let visiblePoints = wifiData.filter(d => {
                 const lat = parseFloat(d.WGS84위도);
                 const lng = parseFloat(d.WGS84경도);
-                // Expand bounds slightly so markers don't pop in/out
                 return lat >= bounds.getSouthWest().getLat() - 0.05 &&
                        lat <= bounds.getNorthEast().getLat() + 0.05 &&
                        lng >= bounds.getSouthWest().getLng() - 0.05 &&
@@ -409,69 +428,62 @@
             }));
 
             const clusters = [];
-
-            while (remainingPoints.length > 0) {
-                const center = remainingPoints.pop();
+            while (visiblePoints.length > 0) {
+                const center = visiblePoints.pop();
                 const cluster = { centerItem: center, items: [center] };
-
                 const nextRemaining = [];
-                for (const p of remainingPoints) {
-                    // Calculate pixel distance
+
+                for (const p of visiblePoints) {
                     const dist = Math.sqrt(
                         Math.pow(center._pixel.x - p._pixel.x, 2) + 
                         Math.pow(center._pixel.y - p._pixel.y, 2)
                     );
-                    
                     if (dist <= CLUSTER_DISTANCE) {
                         cluster.items.push(p);
                     } else {
                         nextRemaining.push(p);
                     }
                 }
-                remainingPoints = nextRemaining;
+                visiblePoints = nextRemaining;
                 clusters.push(cluster);
             }
 
-            renderClusters(clusters);
-        }
-
-        // Render function when zoomed out (Circles)
-        function renderClusters(clusters) {
             clusters.forEach(cluster => {
                 if (cluster.items.length === 1) {
                     createSingleMarker(cluster.items[0]);
                 } else {
-                    // Create Cluster Circle
                     const size = 30 + Math.min(cluster.items.length, 25);
-                    const content = `<div class="cluster-marker" style="width:${size}px; height:${size}px;">${cluster.items.length}</div>`;
-
+                    const content = `<div class="cluster-marker" 
+                        style="width:${size}px; height:${size}px;"
+                        onclick="window.zoomTo(${cluster.centerItem.WGS84위도}, ${cluster.centerItem.WGS84경도})">
+                        ${cluster.items.length}
+                    </div>`;
+                    
                     const overlay = new kakao.maps.CustomOverlay({
                         position: cluster.centerItem._latlng,
                         content: content,
                         clickable: true
                     });
-                    
-                    // Allow clicking cluster to zoom in
-                    // Note: Kakao CustomOverlay events are tricky, we use a trick or just let user zoom manually.
-                    // For simplicity in this vanilla JS, we assume user zooms manually or we'd attach DOM events.
-                    
                     overlay.setMap(map);
                     clusterOverlays.push(overlay);
                 }
             });
         }
 
-        // Render function when zoomed in (All individual pins)
+        // Helper: Zoom in when clicking a cluster
+        window.zoomTo = function(lat, lng) {
+            map.setLevel(4, {animate: true});
+            map.panTo(new kakao.maps.LatLng(lat, lng));
+        };
+
         function renderAllVisiblePoints() {
              const bounds = map.getBounds();
              const sw = bounds.getSouthWest();
              const ne = bounds.getNorthEast();
 
              wifiData.forEach(d => {
-                 // Simple bounds check
                  if (d.WGS84위도 >= sw.getLat() && d.WGS84위도 <= ne.getLat() &&
                      d.WGS84경도 >= sw.getLng() && d.WGS84경도 <= ne.getLng()) {
-                     
                      d._latlng = new kakao.maps.LatLng(d.WGS84위도, d.WGS84경도);
                      createSingleMarker(d);
                  }
@@ -479,88 +491,50 @@
         }
 
         window.triggerSelect = function(lat, lng) {
-			// Find the item with matching coordinates
-			const item = wifiData.find(d => d.WGS84위도 == lat && d.WGS84경도 == lng);
-			if (item) {
-				selectSpot(item);
-			}
-		};
+            const item = wifiData.find(d => d.WGS84위도 == lat && d.WGS84경도 == lng);
+            if (item) selectSpot(item);
+        };
 
-		// 2. REPLACE your createSingleMarker function
-		function createSingleMarker(item) {
-			// We pass coordinates to the function so it knows which item to pick
-			const content = `
-				<div class="wifi-marker" 
-					onclick="window.triggerSelect(${item.WGS84위도}, ${item.WGS84경도})">
-					📡
-				</div>`;
-			
-			// Create the CustomOverlay
-			const overlay = new kakao.maps.CustomOverlay({
-				position: item._latlng,
-				content: content,
-				yAnchor: 1,
-				zIndex: 3 // Force it above other elements
-			});
-			
-			overlay.setMap(map);
-			clusterOverlays.push(overlay);
-		}
-
-        function clearMapObjects() {
-            markers.forEach(m => m.setMap(null));
-            markers = [];
-            clusterOverlays.forEach(o => o.setMap(null));
-            clusterOverlays = [];
-            if (routePolyline) {
-                routePolyline.setMap(null);
-                routePolyline = null;
-            }
+        function createSingleMarker(item) {
+            const content = `<div class="wifi-marker" onclick="window.triggerSelect(${item.WGS84위도}, ${item.WGS84경도})">📡</div>`;
+            const overlay = new kakao.maps.CustomOverlay({
+                position: item._latlng,
+                content: content,
+                yAnchor: 1,
+                zIndex: 3 
+            });
+            overlay.setMap(map);
+            clusterOverlays.push(overlay);
         }
 
-        // --- Interaction ---
         function selectSpot(item) {
             selectedItem = item;
-            
-            // 1. Move map
             const pos = new kakao.maps.LatLng(item.WGS84위도, item.WGS84경도);
             map.panTo(pos);
 
-            // 2. Update Info Card
             const card = document.getElementById('infoCard');
             card.classList.remove('hidden');
             
             document.getElementById('cardTitle').innerText = item.설치장소명;
-            document.getElementById('cardAddr').innerText = item.소재지도로명주소 || "No address provided";
+            document.getElementById('cardAddr').innerText = item.소재지도로명주소 || "No address";
             
             const tags = document.getElementById('cardTags');
             tags.innerHTML = '';
             if(item.서비스제공사명) tags.innerHTML += `<span class="tag">${item.서비스제공사명}</span>`;
             if(item.와이파이SSID) tags.innerHTML += `<span class="tag secondary">${item.와이파이SSID.substring(0, 15)}...</span>`;
-
-            // Reset navigation button state
-            const navBtn = document.getElementById('navBtn');
-            navBtn.innerHTML = '<span>🚀 Start Navigation</span>';
-            navBtn.style.background = '#10b981';
         }
 
         document.getElementById('closeCardBtn').addEventListener('click', () => {
             document.getElementById('infoCard').classList.add('hidden');
-            if(routePolyline) {
-                routePolyline.setMap(null);
-                routePolyline = null;
-            }
         });
 
-        // --- User Location ---
         document.getElementById('locBtn').addEventListener('click', () => {
             if (!navigator.geolocation) {
                 alert("Geolocation not supported.");
                 return;
             }
-            
             const btn = document.getElementById('locBtn');
-            btn.innerHTML = '...'; // loading state
+            btn.innerHTML = '...'; 
 
             navigator.geolocation.getCurrentPosition(pos => {
                 const lat = pos.coords.latitude;
@@ -568,43 +542,32 @@
                 currentPosition = { lat, lng };
                 
                 const locPos = new kakao.maps.LatLng(lat, lng);
-                
                 if (userMarker) userMarker.setMap(null);
                 
-                // Pulse Effect Marker
                 const content = '<div class="user-marker-pulse"></div>';
                 userMarker = new kakao.maps.CustomOverlay({
                     position: locPos,
                     content: content
                 });
                 userMarker.setMap(map);
-                
                 map.setCenter(locPos);
-                map.setLevel(5); // Zoom comfortably
                 
                 document.getElementById('statusMsg').innerText = "Location Found.";
-                
-                // Reset Icon
                 btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>`;
-                
                 updateClusters();
-
             }, () => {
-                alert("Could not find you. Please allow location access.");
+                alert("Please allow location access.");
                 btn.innerHTML = 'X';
             });
         });
 
-        // --- Find Nearest ---
         document.getElementById('nearestBtn').addEventListener('click', () => {
             if (!currentPosition) {
-                alert("Please tap the 'Location' icon (top right) first!");
+                alert("Tap the top-right Location button first!");
                 return;
             }
-
             let minDst = Infinity;
             let closest = null;
-
             wifiData.forEach(item => {
                 const latDiff = item.WGS84위도 - currentPosition.lat;
                 const lngDiff = item.WGS84경도 - currentPosition.lng;
@@ -614,60 +577,23 @@
                     closest = item;
                 }
             });
-
             if (closest) {
                 selectSpot(closest);
-                // Trigger nav immediately
-                startNavigation();
+                // Optional: Auto zoom to show path
             }
         });
 
-        // --- 🔥 IN-APP NAVIGATION ---
-        document.getElementById('navBtn').addEventListener('click', startNavigation);
-
-        function startNavigation() {
-			if (!selectedItem) return;
-			
-			// If we don't have user location, just open the destination
-			if (!currentPosition) {
-				// Fallback: Open Kakao Map to the destination only
-				const url = `https://map.kakao.com/link/to/${selectedItem.설치장소명},${selectedItem.WGS84위도},${selectedItem.WGS84경도}`;
-				window.open(url, '_blank');
-				return;
-			}
-
-			// 🔥 THE FIX: Open Official Kakao Map for Real Route
-			// format: https://map.kakao.com/?sName=Current+Location&eName=Destination&sLat=...&sLng=...&eLat=...&eLng=...
-			
-			const sLat = currentPosition.lat;
-			const sLng = currentPosition.lng;
-			const eLat = selectedItem.WGS84위도;
-			const eLng = selectedItem.WGS84경도;
-			const eName = encodeURIComponent(selectedItem.설치장소명);
-
-			// This URL tells Kakao: "Calculate the walking path from HERE to THERE"
-			const url = `https://map.kakao.com/?sName=My+Location&eName=${eName}&sLat=${sLat}&sLng=${sLng}&eLat=${eLat}&eLng=${eLng}`;
-			
-			// Open in new tab (Mobile users will be prompted to open the App)
-			window.open(url, '_blank');
-		}
-
-		// Helper function for distance
-		function getDistanceInMeters(lat1, lon1, lat2, lon2) {
-			const R = 6371e3; // Earth radius in meters
-			const φ1 = lat1 * Math.PI/180;
-			const φ2 = lat2 * Math.PI/180;
-			const Δφ = (lat2-lat1) * Math.PI/180;
-			const Δλ = (lon2-lon1) * Math.PI/180;
-
-			const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-					Math.cos(φ1) * Math.cos(φ2) *
-					Math.sin(Δλ/2) * Math.sin(Δλ/2);
-			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-			return R * c;
-		}
-
+        document.getElementById('navBtn').addEventListener('click', () => {
+            if (!selectedItem) return;
+            const eName = encodeURIComponent(selectedItem.설치장소명);
+            let url = '';
+            if (currentPosition) {
+                 url = `https://map.kakao.com/?sName=My+Location&eName=${eName}&sLat=${currentPosition.lat}&sLng=${currentPosition.lng}&eLat=${selectedItem.WGS84위도}&eLng=${selectedItem.WGS84경도}`;
+            } else {
+                 url = `https://map.kakao.com/link/to/${selectedItem.설치장소명},${selectedItem.WGS84위도},${selectedItem.WGS84경도}`;
+            }
+            window.open(url, '_blank');
+        });
     </script>
 </body>
 </html>

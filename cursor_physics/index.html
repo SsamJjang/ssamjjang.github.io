@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouncy Text Curtain</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f0f12;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            user-select: none; 
+            -webkit-user-select: none; /* Safari/Mobile support */
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        #ui-layer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #555;
+            z-index: 10;
+            pointer-events: none;
+            font-size: 12px;
+        }
+
+        /* Navigation Arrow Styling */
+        #next-btn {
+            position: absolute;
+            top: 50%;
+            right: 30px;
+            transform: translateY(-50%);
+            z-index: 20;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 60px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 20px;
+            /* Remove default tap highlight on mobile */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #next-btn:hover {
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        /* --- MOBILE TWEAKS --- */
+        @media (max-width: 600px) {
+            #next-btn {
+                top: auto;
+                bottom: 40px;
+                right: 20px;
+                transform: none; /* Reset vertical centering */
+                font-size: 50px;
+            }
+
+            #next-btn:hover {
+                transform: scale(1.1); /* Simple scale without Y shift */
+            }
+
+            #ui-layer {
+                font-size: 10px;
+                width: 70%; /* Prevent overlap with button */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">Click & Drag to disturb • Click arrow to switch text</div>
+    
+    <div id="next-btn">❯</div>
+
+    <canvas id="canvas1"></canvas>
+
+    <script>
+        /**
+         * CONFIGURATION
+         */
+        const config = {
+            textArray: [
+                "SSAMJJANG", 
+                "HELLO", 
+                "CURSOR", 
+                "PHYSICS", 
+                "676767",
+                ":)",
+                "PINEAPPLE",
+                "<!DOCTYPE html>",
+            ], 
+            particleSize: 2,
+            gap: 7,              
+            mouseRadius: 100,    
+            particleColor: 'rgba(255, 255, 255, 0.9)',
+            lineColor: 'rgba(255, 255, 255, 0.1)'
+        };
+
+        let currentTextIndex = 0;
+        const canvas = document.getElementById('canvas1');
+        const ctx = canvas.getContext('2d');
+        const nextBtn = document.getElementById('next-btn');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particleArray = [];
+
+        // Mouse/Touch State
+        const mouse = {
+            x: undefined,
+            y: undefined,
+            radius: config.mouseRadius,
+            isPressed: false
+        }
+
+        // --- DESKTOP EVENTS ---
+        window.addEventListener('mousedown', function(e){
+            mouse.isPressed = true;
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        window.addEventListener('mouseup', function(){
+            mouse.isPressed = false;
+            mouse.x = undefined;
+            mouse.y = undefined;
+        });
+
+        window.addEventListener('mousemove', function(e){
+            if(mouse.isPressed){
+                mouse.x = e.x;
+                mouse.y = e.y;
+            }
+        });
+
+        // --- MOBILE TOUCH EVENTS ---
+        window.addEventListener('touchstart', function(e){
+            mouse.isPressed = true;
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        }, {passive: false});
+
+        window.addEventListener('touchend', function(){
+            mouse.isPressed = false;
+            mouse.x = undefined;
+            mouse.y = undefined;
+        });
+
+        window.addEventListener('touchmove', function(e){
+            if(mouse.isPressed){
+                // preventDefault stops the screen from scrolling while dragging dots
+                e.preventDefault(); 
+                mouse.x = e.touches[0].clientX;
+                mouse.y = e.touches[0].clientY;
+            }
+        }, {passive: false});
+
+
+        // Click Event to Change Text
+        nextBtn.addEventListener('click', function() {
+            currentTextIndex++;
+            if (currentTextIndex >= config.textArray.length) {
+                currentTextIndex = 0;
+            }
+            init(); 
+        });
+
+        class Particle {
+            constructor(x, y){
+                this.x = x;
+                this.y = y;
+                this.originX = x;
+                this.originY = y;
+                this.size = config.particleSize;
+                this.color = config.particleColor;
+                this.vx = 0;
+                this.vy = 0;
+                this.friction = 0.96; 
+                this.ease = 0.05;     
+            }
+
+            draw(){
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.strokeStyle = config.lineColor;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.originY - 1000);
+                ctx.lineTo(this.x, this.y);
+                ctx.stroke();
+            }
+
+            update(){
+                // Only calculate repulsion if mouse is actually near AND pressed
+                // (Since mouse.x is undefined when not pressed, dx/dy become NaN, 
+                // preventing physics from triggering unexpectedly)
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                
+                // Check if valid distance exists (mouse is pressed)
+                if (mouse.x != undefined && mouse.y != undefined) {
+                    let distance = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (distance < mouse.radius) {
+                        let angle = Math.atan2(dy, dx);
+                        let force = (mouse.radius - distance) / mouse.radius;
+                        
+                        let pushX = Math.cos(angle) * force * 40; 
+                        let pushY = Math.sin(angle) * force * 40;
+                        
+                        this.vx -= pushX;
+                        this.vy -= pushY;
+                    }
+                }
+
+                // Spring Physics (Return to Home)
+                let homeDx = this.originX - this.x;
+                let homeDy = this.originY - this.y;
+
+                this.vx += homeDx * this.ease;
+                this.vy += homeDy * this.ease;
+
+                // Friction
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+
+                // Update Position
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+        }
+
+        function init(){
+            particleArray = [];
+            
+            ctx.fillStyle = 'white';
+            let currentText = config.textArray[currentTextIndex];
+            
+            let fontSize = Math.min(window.innerWidth / (currentText.length * 0.8), 200); 
+            ctx.font = 'bold ' + fontSize + 'px Verdana';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillText(currentText, canvas.width/2, canvas.height/2);
+
+            const textCoordinates = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            for (let y = 0; y < textCoordinates.height; y += config.gap){
+                for (let x = 0; x < textCoordinates.width; x += config.gap){
+                    const index = (y * 4 * textCoordinates.width) + (x * 4) + 3;
+                    if (textCoordinates.data[index] > 128){
+                        particleArray.push(new Particle(x, y));
+                    }
+                }
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function animate(){
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particleArray.length; i++){
+                particleArray[i].draw();
+                particleArray[i].update();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+        window.addEventListener('resize', function(){
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+
+    </script>
+</body>
+</html>

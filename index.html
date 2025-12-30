@@ -148,18 +148,62 @@
         }
 
         /* =========================================================
-           🍍 PINEAPPLE CARD STYLES (Specific to this ID)
+           🧶 PHYSICS CURTAIN CARD (New!)
+           ========================================================= */
+        #physics-card {
+            /* Matches the deep dark background of the app */
+            background-color: #0f0f12; 
+            border: 1px solid #444;
+            position: relative;
+            overflow: hidden;
+            
+            /* The "Strings" Pattern */
+            background-image: repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.05) 0px,
+                rgba(255, 255, 255, 0.05) 1px,
+                transparent 1px,
+                transparent 10px
+            );
+            background-size: 100% 100%;
+            transition: all 0.3s ease;
+        }
+
+        #physics-card:hover {
+            border-color: #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+            /* Shift the strings slightly to simulate movement */
+            background-position: 5px 0; 
+        }
+
+        #physics-card .card-icon {
+            /* Make the mouse cursor icon pop */
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+            transform-origin: center;
+        }
+
+        /* Wiggle the cursor on hover like it's pushing dots */
+        #physics-card:hover .card-icon {
+            animation: pushWiggle 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes pushWiggle {
+            0% { transform: scale(1.2) rotate(0deg) translate(0, 0); }
+            100% { transform: scale(1.2) rotate(-15deg) translate(-5px, -2px); }
+        }
+
+        /* =========================================================
+           🍍 PINEAPPLE CARD STYLES
            ========================================================= */
         #pineapple-card {
-            background-color: #fff4d1; /* Light yellow background */
-            color: #4e342e; /* Dark brown text */
-            border: 4px solid #fbc02d; /* Gold border */
-            box-shadow: 0 4px 0px #e6ac00; /* Cartoonish shadow */
+            background-color: #fff4d1; 
+            color: #4e342e; 
+            border: 4px solid #fbc02d; 
+            box-shadow: 0 4px 0px #e6ac00; 
             font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
             overflow: hidden;
             z-index: 1;
             
-            /* Cartoon Pineapple Slice Pattern */
             background-image: 
                 radial-gradient(circle at 50% 50%, #ffd54f 25%, transparent 26%), 
                 radial-gradient(circle at 0% 50%, #ffd54f 25%, transparent 26%), 
@@ -175,7 +219,7 @@
         }
 
         #pineapple-card:hover {
-            transform: scale(1.05) translateY(-5px); /* Bouncy hover */
+            transform: scale(1.05) translateY(-5px); 
             box-shadow: 0 8px 0px #e6ac00;
         }
         
@@ -185,10 +229,9 @@
         }
 
         /* =========================================================
-           👾 RETRO IBM / GLITCH CARD STYLES (Specific to this ID)
+           👾 RETRO IBM / GLITCH CARD STYLES 
            ========================================================= */
         #hacker-card {
-            /* Black Hole Background */
             background-color: #000000;
             background-image: 
                 radial-gradient(circle, rgba(0, 50, 0, 0.1) 0%, transparent 80%),
@@ -198,7 +241,7 @@
             box-shadow: 0 0 15px rgba(51, 255, 0, 0.2);
             font-family: 'Courier New', Courier, monospace;
             position: relative;
-            overflow: hidden; /* Keeps binary inside */
+            overflow: hidden; 
             z-index: 1;
         }
 
@@ -208,21 +251,19 @@
             animation: border-twitch 0.3s infinite;
         }
 
-        /* Text Glitch Effect */
         #hacker-card .card-title, 
         #hacker-card .card-desc,
         #hacker-card .card-icon {
             color: #33ff00;
-            text-shadow: 2px 0 #ff0000, -2px 0 #0000ff; /* RGB Split */
+            text-shadow: 2px 0 #ff0000, -2px 0 #0000ff; 
             position: relative;
-            z-index: 10; /* Keep text above binary */
+            z-index: 10; 
         }
 
         #hacker-card:hover .card-title {
             animation: text-glitch 0.4s infinite;
         }
 
-        /* Floating Binary Particles */
         .binary-particle {
             position: absolute;
             color: #00ff41;
@@ -231,11 +272,10 @@
             opacity: 0;
             pointer-events: none;
             user-select: none;
-            z-index: 2; /* Below text, above background */
+            z-index: 2; 
             animation: floatUp linear forwards;
         }
 
-        /* Animations */
         @keyframes floatUp {
             0% { transform: translateY(100px); opacity: 0; }
             20% { opacity: 0.6; }
@@ -262,10 +302,9 @@
         }
 
         /* =========================================================
-        📡 WIFI MAP CARD (Cyber-Geography Theme)
+        📡 WIFI MAP CARD
         ========================================================= */
         #wifi-card {
-            /* Deep "Map Water" Blue Background */
             background-color: #0f172a;
             overflow: hidden;
             position: relative;
@@ -273,7 +312,6 @@
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
             z-index: 1;
             
-            /* The "Digital Grid" Background Pattern */
             background-image: 
                 linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
@@ -286,20 +324,17 @@
             transform: translateY(-5px) scale(1.02);
         }
 
-        /* --- THE CSS ICON (Constructing a Signal Pin) --- */
-        /* We target .card-icon to draw the pin shape */
         #wifi-card .card-icon {
             width: 20px;
             height: 20px;
             background-color: #3b82f6;
-            border-radius: 50% 50% 50% 0; /* Tear-drop shape */
-            transform: rotate(-45deg); /* Rotated to look like a map pin */
+            border-radius: 50% 50% 50% 0; 
+            transform: rotate(-45deg); 
             margin-bottom: 25px;
             position: relative;
             box-shadow: 0 0 10px #3b82f6;
         }
 
-        /* The white dot inside the pin */
         #wifi-card .card-icon::after {
             content: '';
             position: absolute;
@@ -312,8 +347,6 @@
             transform: translate(-50%, -50%);
         }
 
-        /* --- THE RADAR WAVES (Pure CSS Animation) --- */
-        /* We use ::before on the icon to create the radiating waves */
         #wifi-card .card-icon::before {
             content: '';
             position: absolute;
@@ -325,10 +358,9 @@
             border-radius: 50%;
             border: 2px solid rgba(59, 130, 246, 0.8);
             animation: signal-pulse 2s infinite ease-out;
-            z-index: -1; /* Behind the pin */
+            z-index: -1; 
         }
 
-        /* --- TEXT STYLING --- */
         #wifi-card .card-title {
             color: #eff6ff;
             font-family: 'Segoe UI', Roboto, sans-serif;
@@ -343,20 +375,9 @@
             z-index: 2;
         }
 
-        /* --- ANIMATION KEYFRAMES --- */
         @keyframes signal-pulse {
-            0% {
-                width: 10px;
-                height: 10px;
-                opacity: 1;
-                border-width: 2px;
-            }
-            100% {
-                width: 80px; /* Expands outward */
-                height: 80px;
-                opacity: 0;
-                border-width: 0px;
-            }
+            0% { width: 10px; height: 10px; opacity: 1; border-width: 2px; }
+            100% { width: 80px; height: 80px; opacity: 0; border-width: 0px; }
         }
 
         /* --- FOOTER --- */
@@ -426,25 +447,32 @@
         // ==========================================
         const projectList = [
             {
+                title: "Cursor Physics",
+                desc: "Interactive Particle Curtain (Expt.)",
+                icon: "🖱️",
+                folder: "cursor_physics",
+                id: "physics-card", // UPDATED: Now points to the new style
+            },
+            {
                 title: "Public Wifi Map",
-                desc: "Locate Free Wifi Spots in Incheon",
+                desc: "Locate Free Wifi Spots in Incheon (BETA)",
                 icon: "🗺️",
                 folder: "public_wifi_service",
-                id: "wifi-card", // UNIQUE ID for the Matrix effect
+                id: "wifi-card", 
             },
             {
                 title: "Pinpoint Pineapples",
                 desc: "Finding the Perfect Pineapple",
                 icon: "🍍",
                 folder: "pinpoint_pineapple",
-                id: "pineapple-card", // UNIQUE ID for the pineapple card
+                id: "pineapple-card", 
             },
             {
                 title: "10x Dev Olympics",
                 desc: "Optimize Workflow // Destroy Keyboard",
                 icon: "💻",
                 folder: "developer_olympics",
-                id: "hacker-card", // UNIQUE ID for the Matrix effect
+                id: "hacker-card", 
             },
             // Add more projects here later...
         ];
@@ -459,11 +487,20 @@
             card.className = 'card';
             card.href = `./${proj.folder}/index.html`; 
             
-            // Assign ID if it exists (Crucial for the hacker effect)
+            // Assign ID if it exists (Crucial for the effects)
             if(proj.id) card.id = proj.id;
 
+            // If the card is the Wifi card, we render the HTML structure for the icon manually
+            // Otherwise, we render the text icon
+            let iconHTML = `<div class="card-icon">${proj.icon}</div>`;
+            
+            // Special case for Wifi Card which has a CSS-only icon
+            if (proj.id === 'wifi-card') {
+                iconHTML = `<div class="card-icon"></div>`;
+            }
+
             card.innerHTML = `
-                <div class="card-icon">${proj.icon}</div>
+                ${iconHTML}
                 <h2 class="card-title">${proj.title}</h2>
                 <p class="card-desc">${proj.desc}</p>
             `;
