@@ -384,10 +384,28 @@
             <div class="img-container">
                 <img id="view-img" src="" alt="Pineapple View">
             </div>
-            <div id="view-stats" style="margin-bottom:20px; font-size:1.2rem;">
+            
+            <div id="view-stats" style="margin-bottom:15px; font-size:1.2rem;">
                 <span style="color:var(--pineapple-green); font-weight:bold;">Score: <span id="view-score"></span></span>
                 <span style="color:#888; font-size:0.9rem; margin-left:10px;">(<span id="view-votes"></span> votes)</span>
             </div>
+
+            <p style="margin:0 0 10px; font-weight:bold; color:#666; font-size: 0.9rem;">Rate this pineapple:</p>
+            <div class="rating-grid" id="view-rating-grid">
+                <button class="rate-btn" onclick="submitTargetedVote(1)">1</button>
+                <button class="rate-btn" onclick="submitTargetedVote(2)">2</button>
+                <button class="rate-btn" onclick="submitTargetedVote(3)">3</button>
+                <button class="rate-btn" onclick="submitTargetedVote(4)">4</button>
+                <button class="rate-btn" onclick="submitTargetedVote(5)">5</button>
+                <button class="rate-btn" onclick="submitTargetedVote(6)">6</button>
+                <button class="rate-btn" onclick="submitTargetedVote(7)">7</button>
+                <button class="rate-btn" onclick="submitTargetedVote(8)">8</button>
+                <button class="rate-btn" onclick="submitTargetedVote(9)">9</button>
+                <button class="rate-btn" onclick="submitTargetedVote(10)">10</button>
+            </div>
+            
+            <div id="view-msg" style="color: var(--accent-orange); font-weight:bold; height:20px; margin-bottom:10px;"></div>
+
             <button class="close-btn" onclick="closeView()">Close</button>
         </div>
     </div>
@@ -397,7 +415,8 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsb3drYXBwb2JodGlqaW5kbmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODAzNzEsImV4cCI6MjA4MjE1NjM3MX0.74LB8wzQhivYiSrWILiYX62AIbhe7NzvYk2KwnZIPEY';
         const _db = supabase.createClient(supabaseUrl, supabaseKey);
 
-        let currentPineappleId = null;
+        let currentPineappleId = null; // For the random game
+        let viewingPineappleId = null; // For the manual view
 
         // PAGINATION STATE
         let currentPage = 1;
@@ -417,14 +436,11 @@
             const nextBtn = document.getElementById('next-btn');
             const pageInfo = document.getElementById('page-info');
 
-            // Disable buttons while loading
             prevBtn.disabled = true;
             nextBtn.disabled = true;
-            container.innerHTML = "<div style='text-align:center; padding:20px; color:#888;'>Loading Page " + currentPage + "...</div>";
 
             const offset = (currentPage - 1) * itemsPerPage;
 
-            // Fetch Batch
             const { data, error } = await _db
                 .from('pineapples')
                 .select('*')
@@ -435,35 +451,40 @@
 
             if (error) {
                 console.error("DB Error:", error);
-                container.innerHTML = "<p style='text-align:center'>Error loading pineapples.</p>";
                 lbLoading = false;
                 return;
             }
 
-            if (data.length === 0 && currentPage === 1) {
-                container.innerHTML = "<p style='text-align:center'>No votes yet. Be the first!</p>";
-                lbLoading = false;
-                return;
-            } else if (data.length === 0) {
+            // Handle empty pages
+            if (data.length === 0 && currentPage > 1) {
                 currentPage--;
+                lbLoading = false;
                 fetchLeaderboard();
                 return;
             }
 
             container.innerHTML = "";
+            container.style.opacity = "1";
 
             data.forEach((p, index) => {
                 const globalRank = offset + index + 1;
-                const safeName = p.custom_name.replace(/'/g, "\\'");
+                const safeName = p.custom_name.replace(/'/g, "\\'"); 
                 const safeImg = p.image_url;
+                
+                // ⚡ EXTREME OPTIMIZATION: 
+                // We request a width of 30px (half the size of the container)
+                // and quality=20. This makes it tiny and naturally blurry.
+                const thumbnailUrl = `${p.image_url}?width=30&quality=20&resize=cover`;
 
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'lb-item';
-                itemDiv.onclick = () => openView(safeName, safeImg, p.average_score, p.vote_count);
+                
+                // Pass the ID here so we can vote on it!
+                itemDiv.onclick = () => openView(p.id, safeName, safeImg, p.average_score, p.vote_count);
                 
                 itemDiv.innerHTML = `
                     <div class="lb-rank">${globalRank}</div>
-                    <img src="${p.image_url}" class="lb-img" loading="lazy">
+                    <img src="${thumbnailUrl}" class="lb-img" loading="lazy" decoding="async">
                     <div class="lb-info">
                         <div class="lb-name">${p.custom_name}</div>
                         <div class="lb-stats">${p.vote_count} votes</div>
@@ -473,7 +494,6 @@
                 container.appendChild(itemDiv);
             });
 
-            // Update Controls
             pageInfo.innerText = "Page " + currentPage;
             prevBtn.disabled = (currentPage === 1);
             nextBtn.disabled = (data.length < itemsPerPage);
@@ -496,22 +516,52 @@
         }
 
         // ===========================================
-        // 🔍 MAGNIFIED VIEW LOGIC
+        // 🔍 MAGNIFIED VIEW & MANUAL VOTING
         // ===========================================
-        function openView(name, imgUrl, score, votes) {
+        function openView(id, name, imgUrl, score, votes) {
+            viewingPineappleId = id; // Save ID for voting
+            
             document.getElementById('view-title').innerText = name;
-            document.getElementById('view-img').src = imgUrl;
+            document.getElementById('view-img').src = imgUrl; // Load full res here
             document.getElementById('view-score').innerText = score;
             document.getElementById('view-votes').innerText = votes;
+            document.getElementById('view-msg').innerText = ""; // Clear old messages
+            
+            // Show the buttons again
+            document.getElementById('view-rating-grid').classList.remove('hidden');
             document.getElementById('view-overlay').classList.remove('hidden');
         }
 
         function closeView() {
             document.getElementById('view-overlay').classList.add('hidden');
+            viewingPineappleId = null;
+            fetchLeaderboard(); // Refresh list to show new score
+        }
+
+        // New function specifically for voting inside the View Modal
+        async function submitTargetedVote(score) {
+            if (!viewingPineappleId) return;
+
+            document.getElementById('view-msg').innerText = "Submitting...";
+
+            const { error } = await _db.rpc('vote_for_pineapple', {
+                pineapple_id: viewingPineappleId,
+                rating: score
+            });
+
+            if (error) {
+                document.getElementById('view-msg').innerText = "Error: " + error.message;
+            } else {
+                document.getElementById('view-msg').innerText = "Vote Saved! 🍍";
+                
+                // Visual Update (Fake it until refresh)
+                const currentVotes = parseInt(document.getElementById('view-votes').innerText);
+                document.getElementById('view-votes').innerText = currentVotes + 1;
+            }
         }
 
         // ===========================================
-        // 🎮 VOTING GAME LOGIC
+        // 🎮 RANDOM GAME LOGIC
         // ===========================================
         function openGame() {
             document.getElementById('game-overlay').classList.remove('hidden');
@@ -548,6 +598,7 @@
                 const p = data[0];
                 currentPineappleId = p.id;
                 
+                // Preload image
                 const tempImg = new Image();
                 tempImg.src = p.image_url;
                 tempImg.onload = () => {
@@ -577,7 +628,7 @@
 
         // Initial Load
         fetchLeaderboard();
-
+        
     </script>
 </body>
 </html>
