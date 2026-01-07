@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ImSheeponator 🐑 v1.2</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/meyda@5.6.0/dist/web/meyda.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
@@ -13,10 +15,8 @@
             --sky-top: #4facfe;
             --sky-bottom: #00f2fe;
             --grass: #76b852;
-            --grass-dark: #8dc26f;
             --sheep-white: #ffffff;
             --text-color: #555;
-            --accent-orange: #ff9a9e;
         }
 
         body {
@@ -28,12 +28,15 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            /* use dvh (dynamic viewport height) for mobile browsers */
+            min-height: 100dvh; 
             overflow: hidden;
             text-align: center;
+            /* Prevent pull-to-refresh on mobile */
+            overscroll-behavior: none;
         }
 
-        /* --- CLOUDS BACKGROUND --- */
+        /* --- CLOUDS --- */
         .cloud {
             position: absolute;
             background: rgba(255, 255, 255, 0.8);
@@ -42,10 +45,7 @@
             animation: floatCloud 20s infinite linear;
         }
         .cloud::after, .cloud::before {
-            content: '';
-            position: absolute;
-            background: inherit;
-            border-radius: 50%;
+            content: ''; position: absolute; background: inherit; border-radius: 50%;
         }
         .c1 { width: 120px; height: 50px; top: 10%; left: -150px; animation-duration: 25s; }
         .c1::after { width: 60px; height: 60px; top: -30px; left: 20px; }
@@ -59,51 +59,53 @@
             to { left: 110%; }
         }
 
-        /* --- HILLS AT THE BOTTOM --- */
+        /* --- HILLS --- */
         .hills {
             position: absolute;
             bottom: -50px;
             width: 100%;
-            height: 200px;
+            height: 150px; /* Smaller hills for mobile */
             background: var(--grass);
             border-radius: 100% 100% 0 0;
             z-index: 1;
         }
 
-        /* --- UI CONTAINER --- */
+        /* --- MAIN CARD --- */
         .farm-wrapper {
             position: relative;
             background: rgba(255, 255, 255, 0.9);
-            padding: 40px;
+            padding: 30px 20px; /* Reduced padding for mobile */
             border-radius: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             z-index: 10;
             max-width: 400px;
-            width: 90%;
-            border: 8px solid #fff;
+            width: 85%; /* Fits nicely on phone screens */
+            border: 6px solid #fff;
+            margin-bottom: 20px; /* Space from bottom */
         }
 
         h1 {
             font-family: 'Fredoka One', cursive;
             color: #444;
-            font-size: 2rem;
+            font-size: 1.8rem; /* Responsive font size */
             margin: 0;
             text-shadow: 2px 2px 0px #eee;
+            line-height: 1.2;
         }
 
         .subtitle {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: #777;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-weight: 700;
         }
 
-        /* --- BIG FLUFFY BUTTON --- */
+        /* --- MIC BUTTON --- */
         .mic-container {
             position: relative;
-            margin: 20px auto;
-            width: 140px;
-            height: 140px;
+            margin: 15px auto;
+            width: 120px; /* Slightly smaller for mobile */
+            height: 120px;
         }
 
         #mic-btn {
@@ -113,14 +115,15 @@
             background: var(--sheep-white);
             border: none;
             cursor: pointer;
-            font-size: 4rem;
+            font-size: 3.5rem;
             box-shadow: 0 8px 0 #ddd, 0 15px 20px rgba(0,0,0,0.1);
             transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            z-index: 2;
+            /* Mobile touch fix: removes 300ms delay */
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent;
         }
 
         #mic-btn:active {
@@ -141,10 +144,10 @@
         /* --- RESULTS --- */
         #result-card {
             margin-top: 20px;
-            padding: 20px;
+            padding: 15px;
             background: #e0f7fa;
             border-radius: 20px;
-            display: none; /* Hidden by default */
+            display: none;
             animation: popIn 0.5s ease;
         }
 
@@ -155,7 +158,7 @@
 
         .score-display {
             font-family: 'Fredoka One', cursive;
-            font-size: 3.5rem;
+            font-size: 3rem;
             color: var(--sky-top);
             display: block;
             line-height: 1;
@@ -163,36 +166,27 @@
 
         .verdict-display {
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #555;
-            margin-top: 10px;
+            margin-top: 5px;
             display: block;
         }
 
-        /* --- BACK LINK --- */
+        /* --- BACK LINK (Notch Safe) --- */
         .back-link {
             position: absolute;
-            top: 20px;
+            top: max(20px, env(safe-area-inset-top)); /* iPhone Notch Safety */
             left: 20px;
             text-decoration: none;
             background: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 30px;
             font-weight: bold;
             color: var(--text-color);
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             z-index: 100;
             font-family: 'Nunito', sans-serif;
-            transition: transform 0.2s;
-        }
-        .back-link:hover {
-            transform: scale(1.05);
-        }
-
-        .emoji-deco {
-            font-size: 1.5rem;
-            position: absolute;
-            pointer-events: none;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -201,7 +195,7 @@
     <div class="cloud c1"></div>
     <div class="cloud c2"></div>
 
-    <a href="../index.html" class="back-link">Back</a>
+    <a href="../index.html" class="back-link">🏡 Back</a>
 
     <div class="farm-wrapper">
         <h1>The ImSheeponator</h1>
@@ -220,30 +214,28 @@
     <div class="hills"></div>
 
     <script>
-        // CONFIGURATION
         const MODEL_URL = './model/model.json';
-        const RECORD_TIME_MS = 2000; // 2 seconds
+        const RECORD_TIME_MS = 2000;
 
         let model;
         let audioContext;
         let isRecording = false;
         
-        // UI Elements
         const statusText = document.getElementById('status-text');
         const micBtn = document.getElementById('mic-btn');
         const resultCard = document.getElementById('result-card');
         const scoreEl = document.getElementById('score');
         const verdictEl = document.getElementById('verdict');
 
-        // 1. Load the Brain
+        // 1. Load Model
         async function loadModel() {
             try {
                 model = await tf.loadLayersModel(MODEL_URL);
-                statusText.innerText = "Tap the mic & say BAAA!";
+                statusText.innerText = "Tap mic & say BAAA!";
                 console.log("Model ready!");
             } catch (error) {
                 console.error(error);
-                statusText.innerText = "⚠️ Oops! Use Live Server!";
+                statusText.innerText = "⚠️ Model Error (Check Console)";
                 statusText.style.color = "red";
             }
         }
@@ -253,7 +245,14 @@
         micBtn.addEventListener('click', async () => {
             if (!model || isRecording) return;
 
-            // Start Recording
+            // iOS requires AudioContext to be created on user gesture (click)
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+
             isRecording = true;
             micBtn.classList.add('recording');
             resultCard.style.display = 'none';
@@ -261,10 +260,8 @@
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const source = audioContext.createMediaStreamSource(stream);
 
-                // Setup Meyda
                 const meyda = Meyda.createMeydaAnalyzer({
                     "audioContext": audioContext,
                     "source": source,
@@ -276,19 +273,17 @@
                 });
                 meyda.start();
 
-                // Collect Data
                 let mfccData = [];
                 const timer = setInterval(() => {
                     const f = meyda.get('mfcc');
                     if(f) mfccData.push(f);
                 }, 50);
 
-                // Stop after 2 seconds
                 setTimeout(() => {
                     clearInterval(timer);
                     meyda.stop();
-                    stream.getTracks().forEach(t => t.stop());
-                    audioContext.close();
+                    // Don't close audioContext on mobile, just stop tracks
+                    stream.getTracks().forEach(t => t.stop()); 
                     
                     isRecording = false;
                     micBtn.classList.remove('recording');
@@ -301,48 +296,46 @@
                 console.error(err);
                 statusText.innerText = "Microphone blocked :(";
                 isRecording = false;
+                micBtn.classList.remove('recording');
             }
         });
 
-        // 3. The Math Part
         async function analyze(mfccHistory) {
-            if (mfccHistory.length === 0) return;
+            if (mfccHistory.length === 0) {
+                statusText.innerText = "No sound heard?";
+                return;
+            }
 
-            // Average the data (Math stuff to match Python)
             let avg = new Array(40).fill(0);
             for (let i = 0; i < mfccHistory.length; i++) {
                 for (let j = 0; j < 40; j++) avg[j] += mfccHistory[i][j];
             }
             for (let j = 0; j < 40; j++) avg[j] /= mfccHistory.length;
 
-            // Predict
             const tensor = tf.tensor2d([avg], [1, 40]);
             const prediction = model.predict(tensor);
             const score = (await prediction.data())[0];
             
             showResult(score);
-            
-            // Clean up
             tensor.dispose();
             prediction.dispose();
         }
 
-        // 4. Show the Jolly Result
         function showResult(score) {
             const pct = (score * 100).toFixed(0);
             scoreEl.innerText = `${pct}%`;
             
             if (score > 0.8) {
                 verdictEl.innerText = "BAAAAAAAAAAAAAAAA! 🐑";
-                resultCard.style.background = "#d4edda"; // Light Green
+                resultCard.style.background = "#d4edda"; 
                 scoreEl.style.color = "#155724";
             } else if (score > 0.5) {
                 verdictEl.innerText = "Not bad...";
-                resultCard.style.background = "#fff3cd"; // Light Yellow
+                resultCard.style.background = "#fff3cd"; 
                 scoreEl.style.color = "#856404";
             } else {
                 verdictEl.innerText = "Imposter";
-                resultCard.style.background = "#f8d7da"; // Light Red
+                resultCard.style.background = "#f8d7da"; 
                 scoreEl.style.color = "#721c24";
             }
 
