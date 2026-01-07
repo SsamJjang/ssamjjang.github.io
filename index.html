@@ -227,6 +227,73 @@
             transform: scale(0.98) translateY(2px);
             box-shadow: 0 2px 0px #e6ac00;
         }
+        /* =========================================================
+        🐑 IMSHEEPONATOR (The Fluffy Edition)
+        ========================================================= */
+        #sheep-card {
+            /* Grassy Green Gradient */
+            background: linear-gradient(180deg, #8dc26f 0%, #76b852 100%);
+            border: 4px solid #fff;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            font-family: 'Nunito', 'Segoe UI', sans-serif; /* Soft round font */
+        }
+
+        /* Background "Wool" Texture (Polka dots) */
+        #sheep-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(rgba(255,255,255,0.2) 20%, transparent 20%);
+            background-size: 20px 20px;
+            opacity: 0.5;
+            z-index: 0;
+            transition: all 0.5s ease;
+        }
+
+        /* The Card Icon (The Sheep) */
+        #sheep-card .card-icon {
+            font-size: 4rem;
+            z-index: 2;
+            filter: drop-shadow(0 4px 0 rgba(0,0,0,0.1));
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Text Styling */
+        #sheep-card .card-title {
+            text-shadow: 0 2px 0 rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+        #sheep-card .card-desc {
+            color: #e8f5e9; /* Light green-white text */
+            z-index: 2;
+        }
+
+        /* --- HOVER EFFECTS --- */
+        #sheep-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 0 rgba(0,0,0,0.1); /* Deep shadow */
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); /* Turns into Sky Blue! */
+            border-color: #fff;
+        }
+
+        #sheep-card:hover::before {
+            background-size: 30px 30px; /* Wool gets fluffier */
+            opacity: 0.3;
+        }
+
+        #sheep-card:hover .card-icon {
+            transform: scale(1.3) rotate(-10deg);
+            animation: bounce 0.6s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: scale(1.3) rotate(-10deg) translateY(0); }
+            to { transform: scale(1.3) rotate(-10deg) translateY(-5px); }
+        }
 
         /* =========================================================
            👾 RETRO IBM / GLITCH CARD STYLES 
@@ -446,6 +513,13 @@
         // 🎨 CONFIGURATION: DEFINE YOUR BUTTONS
         // ==========================================
         const projectList = [
+            {
+                title: "ImSheeponator",
+                desc: "How Sheepish is your Sheep Imitation?",
+                icon: "🐑",
+                folder: "imsheeponator",
+                id: "sheep-card", // UPDATED: Now points to the new style
+            },
             {
                 title: "Cursor Physics",
                 desc: "Interactive Particle Curtain (Expt.)",

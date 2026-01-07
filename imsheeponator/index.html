@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImSheeponator 🐑</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/meyda@5.6.0/dist/web/meyda.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --sky-top: #4facfe;
+            --sky-bottom: #00f2fe;
+            --grass: #76b852;
+            --grass-dark: #8dc26f;
+            --sheep-white: #ffffff;
+            --text-color: #555;
+            --accent-orange: #ff9a9e;
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-bottom) 100%);
+            color: var(--text-color);
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        /* --- CLOUDS BACKGROUND --- */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
+            z-index: 0;
+            animation: floatCloud 20s infinite linear;
+        }
+        .cloud::after, .cloud::before {
+            content: '';
+            position: absolute;
+            background: inherit;
+            border-radius: 50%;
+        }
+        .c1 { width: 120px; height: 50px; top: 10%; left: -150px; animation-duration: 25s; }
+        .c1::after { width: 60px; height: 60px; top: -30px; left: 20px; }
+        .c1::before { width: 50px; height: 50px; top: -20px; left: 60px; }
+
+        .c2 { width: 100px; height: 40px; top: 20%; left: -150px; animation-duration: 18s; animation-delay: 5s; }
+        .c2::after { width: 50px; height: 50px; top: -25px; left: 15px; }
+
+        @keyframes floatCloud {
+            from { left: -150px; }
+            to { left: 110%; }
+        }
+
+        /* --- HILLS AT THE BOTTOM --- */
+        .hills {
+            position: absolute;
+            bottom: -50px;
+            width: 100%;
+            height: 200px;
+            background: var(--grass);
+            border-radius: 100% 100% 0 0;
+            z-index: 1;
+        }
+
+        /* --- UI CONTAINER --- */
+        .farm-wrapper {
+            position: relative;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            z-index: 10;
+            max-width: 400px;
+            width: 90%;
+            border: 8px solid #fff;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            color: #444;
+            font-size: 2rem;
+            margin: 0;
+            text-shadow: 2px 2px 0px #eee;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #777;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        /* --- BIG FLUFFY BUTTON --- */
+        .mic-container {
+            position: relative;
+            margin: 20px auto;
+            width: 140px;
+            height: 140px;
+        }
+
+        #mic-btn {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--sheep-white);
+            border: none;
+            cursor: pointer;
+            font-size: 4rem;
+            box-shadow: 0 8px 0 #ddd, 0 15px 20px rgba(0,0,0,0.1);
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        #mic-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #ccc, 0 5px 10px rgba(0,0,0,0.1);
+        }
+
+        #mic-btn.recording {
+            animation: bounce 0.6s infinite alternate;
+            background: #fff0f0;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+
+        /* --- RESULTS --- */
+        #result-card {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e0f7fa;
+            border-radius: 20px;
+            display: none; /* Hidden by default */
+            animation: popIn 0.5s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .score-display {
+            font-family: 'Fredoka One', cursive;
+            font-size: 3.5rem;
+            color: var(--sky-top);
+            display: block;
+            line-height: 1;
+        }
+
+        .verdict-display {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #555;
+            margin-top: 10px;
+            display: block;
+        }
+
+        /* --- BACK LINK --- */
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            color: var(--text-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            font-family: 'Nunito', sans-serif;
+            transition: transform 0.2s;
+        }
+        .back-link:hover {
+            transform: scale(1.05);
+        }
+
+        .emoji-deco {
+            font-size: 1.5rem;
+            position: absolute;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+
+    <a href="../index.html" class="back-link">Back</a>
+
+    <div class="farm-wrapper">
+        <h1>The ImSheeponator</h1>
+        <p class="subtitle" id="status-text">Loading the model...</p>
+
+        <div class="mic-container">
+            <button id="mic-btn">🎙️</button>
+        </div>
+
+        <div id="result-card">
+            <span class="score-display" id="score">0%</span>
+            <span class="verdict-display" id="verdict">?</span>
+        </div>
+    </div>
+
+    <div class="hills"></div>
+
+    <script>
+        // CONFIGURATION
+        const MODEL_URL = './model/model.json';
+        const RECORD_TIME_MS = 2000; // 2 seconds
+
+        let model;
+        let audioContext;
+        let isRecording = false;
+        
+        // UI Elements
+        const statusText = document.getElementById('status-text');
+        const micBtn = document.getElementById('mic-btn');
+        const resultCard = document.getElementById('result-card');
+        const scoreEl = document.getElementById('score');
+        const verdictEl = document.getElementById('verdict');
+
+        // 1. Load the Brain
+        async function loadModel() {
+            try {
+                model = await tf.loadLayersModel(MODEL_URL);
+                statusText.innerText = "Tap the mic & say BAAA!";
+                console.log("Model ready!");
+            } catch (error) {
+                console.error(error);
+                statusText.innerText = "⚠️ Oops! Use Live Server!";
+                statusText.style.color = "red";
+            }
+        }
+        loadModel();
+
+        // 2. Button Logic
+        micBtn.addEventListener('click', async () => {
+            if (!model || isRecording) return;
+
+            // Start Recording
+            isRecording = true;
+            micBtn.classList.add('recording');
+            resultCard.style.display = 'none';
+            statusText.innerText = "Listening...";
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+
+                // Setup Meyda
+                const meyda = Meyda.createMeydaAnalyzer({
+                    "audioContext": audioContext,
+                    "source": source,
+                    "bufferSize": 512,
+                    "featureExtractors": ["mfcc"],
+                    "numberOfMFCCCoefficients": 40,
+                    "windowingFunction": "hamming",
+                    "callback": (features) => {}
+                });
+                meyda.start();
+
+                // Collect Data
+                let mfccData = [];
+                const timer = setInterval(() => {
+                    const f = meyda.get('mfcc');
+                    if(f) mfccData.push(f);
+                }, 50);
+
+                // Stop after 2 seconds
+                setTimeout(() => {
+                    clearInterval(timer);
+                    meyda.stop();
+                    stream.getTracks().forEach(t => t.stop());
+                    audioContext.close();
+                    
+                    isRecording = false;
+                    micBtn.classList.remove('recording');
+                    statusText.innerText = "Thinking...";
+                    
+                    analyze(mfccData);
+                }, RECORD_TIME_MS);
+
+            } catch (err) {
+                console.error(err);
+                statusText.innerText = "Microphone blocked :(";
+                isRecording = false;
+            }
+        });
+
+        // 3. The Math Part
+        async function analyze(mfccHistory) {
+            if (mfccHistory.length === 0) return;
+
+            // Average the data (Math stuff to match Python)
+            let avg = new Array(40).fill(0);
+            for (let i = 0; i < mfccHistory.length; i++) {
+                for (let j = 0; j < 40; j++) avg[j] += mfccHistory[i][j];
+            }
+            for (let j = 0; j < 40; j++) avg[j] /= mfccHistory.length;
+
+            // Predict
+            const tensor = tf.tensor2d([avg], [1, 40]);
+            const prediction = model.predict(tensor);
+            const score = (await prediction.data())[0];
+            
+            showResult(score);
+            
+            // Clean up
+            tensor.dispose();
+            prediction.dispose();
+        }
+
+        // 4. Show the Jolly Result
+        function showResult(score) {
+            const pct = (score * 100).toFixed(0);
+            scoreEl.innerText = `${pct}%`;
+            
+            if (score > 0.8) {
+                verdictEl.innerText = "BAAAAAAAAAAAAAAAA! 🐑";
+                resultCard.style.background = "#d4edda"; // Light Green
+                scoreEl.style.color = "#155724";
+            } else if (score > 0.5) {
+                verdictEl.innerText = "Not bad...";
+                resultCard.style.background = "#fff3cd"; // Light Yellow
+                scoreEl.style.color = "#856404";
+            } else {
+                verdictEl.innerText = "Imposter";
+                resultCard.style.background = "#f8d7da"; // Light Red
+                scoreEl.style.color = "#721c24";
+            }
+
+            resultCard.style.display = 'block';
+            statusText.innerText = "Tap to try again!";
+        }
+    </script>
+</body>
+</html>
