@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Scissor Paper Shoot!</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-main: #333333;
+            --text-muted: #777777;
+            --accent-win: #00c853; 
+            --accent-lose: #d50000;
+            --card-bg: #f8f9fa;
+            --shadow-light: 0 4px 15px rgba(0,0,0,0.05);
+            --shadow-deep: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at center, #eef2f5 2px, transparent 2px);
+            background-size: 40px 40px;
+            color: var(--text-main);
+            margin: 0;
+            user-select: none;
+            overflow: hidden;
+            width: 100vw; height: 100vh;
+            position: relative;
+        }
+
+        /* Hide background in game mode */
+        body.game-mode-active .floating-bg { display: none !important; }
+
+        .floating-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            overflow: hidden; z-index: 1; pointer-events: none;
+        }
+        
+        .floater {
+            position: absolute; bottom: -150px; 
+            animation: floatUp linear infinite; 
+            opacity: 0.7;
+        }
+        
+        .floater .hand-shape, .floater .pot-container { transform: scale(0.6); }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- CSS ART --- */
+        .hand-shape { position: relative; width: 120px; height: 120px; transition: all 0.2s; }
+
+        .rock .hand-shape {
+            background: #777; border-radius: 50% 45% 50% 45%;
+            box-shadow: inset -15px -15px 0 rgba(0,0,0,0.3);
+            border: 3px solid #555; transform: rotate(45deg);
+        }
+
+        .paper .hand-shape {
+            background: #fff; width: 100px; height: 130px;
+            border-radius: 8px; border: 3px solid #333;
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.1); transform: rotate(-10deg);
+        }
+        .paper .hand-shape::after {
+            content: ''; position: absolute; top: 25px; left: 15px; right: 15px; height: 3px;
+            background: #ccc; box-shadow: 0 20px 0 #ccc, 0 40px 0 #ccc;
+        }
+
+        .scissors .hand-shape { width: 120px; height: 120px; }
+        .scissors .hand-shape::before, .scissors .hand-shape::after {
+            content: ''; position: absolute; bottom: 0; left: 50px; width: 25px; height: 120px;
+            background: #d50000; border: 3px solid #a30000;
+            border-radius: 12px 12px 0 0; transform-origin: bottom center;
+        }
+        .scissors .hand-shape::before { transform: rotate(-25deg); }
+        .scissors .hand-shape::after { transform: rotate(25deg); z-index: 2; }
+        .scissors .icon-extras {
+            position: absolute; bottom: 15px; left: 50px; width: 25px; height: 25px;
+            background: #333; border: 3px solid #eee; border-radius: 50%; z-index: 15;
+        }
+
+        .pot-container { position: relative; width: 60px; height: 60px; transform: scale(0.8); }
+        .pot-body { position: absolute; bottom: 0; left: 10px; width: 40px; height: 35px; background: #e17055; border-radius: 5px 5px 15px 15px; }
+        .pot-rim { position: absolute; bottom: 30px; left: 8px; width: 44px; height: 8px; background: #d65d42; border-radius: 3px; z-index: 2; }
+        .pot-plant { position: absolute; bottom: 35px; left: 20px; width: 20px; height: 20px; background: #00b894; border-radius: 50% 50% 0 50%; transform: rotate(-45deg); box-shadow: 10px -5px 0 #00b894; }
+
+        /* --- UI ELEMENTS --- */
+        .auth-bar {
+            position: absolute; top: 20px; right: 20px; z-index: 1000;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .user-pill {
+            background: white; padding: 8px 16px; border-radius: 50px;
+            box-shadow: var(--shadow-light); font-weight: 600; font-size: 0.9rem;
+            display: none; border: 1px solid #eee;
+        }
+        .login-btn {
+            background: #4285F4; color: white; border: none; padding: 10px 20px;
+            border-radius: 8px; cursor: pointer; font-weight: bold;
+            box-shadow: var(--shadow-light);
+        }
+
+        .screen {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.4s ease; z-index: 10;
+        }
+        .hidden { 
+            opacity: 0 !important; 
+            pointer-events: none !important; 
+            z-index: -1 !important; 
+            transform: scale(0.95); 
+        }
+
+        h1 { font-size: 3.5rem; margin-bottom: 60px; font-weight: 800; color: #222; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .mode-grid { display: flex; gap: 30px; z-index: 20; }
+
+        .corner-actions {
+            position: fixed; bottom: 20px; right: 20px; z-index: 2000;
+            display: flex; gap: 10px;
+        }
+        .action-btn {
+            background: white; padding: 12px 20px; border-radius: 30px;
+            border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-weight: bold; color: #333; cursor: pointer; transition: transform 0.2s;
+        }
+        .action-btn:hover { transform: scale(1.05); color: var(--accent-win); }
+
+        .game-card {
+            background: white; padding: 30px; border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 200px; cursor: pointer; border: 2px solid transparent; 
+            transition: transform 0.3s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .game-card:hover { transform: translateY(-10px); border-color: var(--accent-win); box-shadow: var(--shadow-deep); }
+        .card-icon { font-size: 3.5rem; margin-bottom: 15px; }
+        .card-title { font-weight: 800; font-size: 1.2rem; margin: 0; }
+        .card-desc { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px); z-index: 3000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+        .modal-content {
+            background: white; width: 320px; padding: 30px; border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2); text-align: center;
+            position: relative; transform: translateY(20px); transition: transform 0.3s;
+        }
+        .lb-content { width: 380px; text-align: left; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+
+        .close-modal-btn {
+            position: absolute; top: 15px; right: 20px; font-size: 2rem;
+            background: none; border: none; cursor: pointer; color: #999;
+        }
+        .close-modal-btn:hover { color: #333; }
+
+        .stat-grid { display: flex; gap: 15px; margin-top: 25px; }
+        .stat-box { flex: 1; padding: 15px; border-radius: 12px; }
+        .win-box { background: #e8f5e9; color: var(--accent-win); }
+        .lose-box { background: #ffebee; color: var(--accent-lose); }
+        .big-num { display: block; font-size: 2.5rem; font-weight: 800; }
+        .label { font-size: 0.8rem; font-weight: bold; opacity: 0.8; }
+        .stat-row { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: #555; }
+
+        /* Leaderboard Styles */
+        .lb-header { display: grid; grid-template-columns: 50px 1fr 80px; padding: 0 10px 10px; border-bottom: 2px solid #eee; font-size: 0.8rem; font-weight: bold; color: #999; text-transform: uppercase; }
+        .lb-list { max-height: 300px; overflow-y: auto; margin-top: 10px; }
+        .lb-row { display: grid; grid-template-columns: 50px 1fr 80px; align-items: center; padding: 12px 10px; border-bottom: 1px solid #f5f5f5; font-weight: 600; }
+        .lb-rank { font-size: 1.1rem; }
+        .lb-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; color: #555; }
+        .lb-wins { color: var(--accent-win); text-align: right; }
+
+        /* --- GAMEPLAY --- */
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; padding: 10px 20px; background: white;
+            color: var(--text-muted); border: 2px solid #ddd; border-radius: 8px; cursor: pointer; z-index: 100;
+        }
+
+        .scoreboard {
+            display: flex; gap: 60px; font-size: 2.5rem; font-weight: bold; margin-bottom: 50px;
+            background: var(--card-bg); padding: 20px 50px; border-radius: 20px; box-shadow: var(--shadow-light);
+        }
+        .score-box { text-align: center; }
+        .score-label { font-size: 0.9rem; color: var(--text-muted); display: block; margin-bottom: 5px; }
+        .goal-caption { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; background: #eee; padding: 2px 8px; border-radius: 10px; }
+
+        @keyframes scoreFlash {
+            0% { transform: scale(1); text-shadow: 0 0 0 rgba(0,0,0,0); }
+            50% { transform: scale(1.5); color: #ffd700; text-shadow: 0 0 20px #ffd700; }
+            100% { transform: scale(1); }
+        }
+        .score-update { animation: scoreFlash 0.5s ease; }
+
+        .battlefield { display: flex; align-items: center; justify-content: center; gap: 80px; margin-bottom: 60px; height: 220px; }
+        .fighter { width: 180px; height: 180px; display: flex; justify-content: center; align-items: center; position: relative; }
+
+        .shake .hand-shape { animation: shakeHard 0.3s infinite; }
+        @keyframes shakeHard {
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-40px) rotate(-5deg); }
+            75% { transform: translateY(-40px) rotate(5deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        .pop { animation: revealPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes revealPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); } }
+
+        .controls { display: flex; gap: 25px; z-index: 100; }
+        button.game-btn {
+            background: var(--bg-color); border: 2px solid #eee; color: var(--text-main); padding: 18px 40px;
+            font-size: 1.2rem; font-weight: bold; border-radius: 12px; cursor: pointer; box-shadow: var(--shadow-light);
+            text-transform: uppercase; transition: transform 0.2s;
+        }
+        button.game-btn:hover { transform: translateY(-5px); border-color: var(--accent-win); color: var(--accent-win); box-shadow: var(--shadow-deep); }
+        
+        .status-container { margin-top: 30px; text-align: center; height: 40px; }
+        .winner-text { font-size: 1.8rem; font-weight: 800; color: var(--text-muted); }
+
+        #match-overlay {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.95); z-index: 50;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .loader {
+            width: 40px; height: 40px; border: 4px solid #eee; border-top-color: var(--accent-win);
+            border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 20px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="auth-bar">
+        <div id="user-info" class="user-pill">
+            <span id="user-email">Guest</span>
+        </div>
+        <button id="auth-btn" class="login-btn" onclick="handleAuth()">Login with Google</button>
+    </div>
+
+    <div class="floating-bg" id="bg-container"></div>
+
+    <div id="home-screen" class="screen">
+        <h1>Rock Scissor Paper Shoot!</h1>
+        <div class="mode-grid">
+            <div class="game-card" onclick="startBotGame()">
+                <span class="card-icon">🤖</span>
+                <span class="card-title">BOT FIGHT</span>
+                <span class="card-desc">Training Mode</span>
+            </div>
+            <div class="game-card" onclick="startOnlineGame()">
+                <span class="card-icon">⚡</span>
+                <span class="card-title">ONLINE</span>
+                <span class="card-desc">Find Active Players</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-screen" class="screen hidden">
+        <button class="back-btn" onclick="goHome()">Exit Match</button>
+        <div class="scoreboard">
+            <div class="score-box">
+                <span class="score-label">YOU</span>
+                <span id="p-score" style="color: var(--accent-win)">0</span>
+            </div>
+            <div class="score-box" style="opacity: 0.8; display: flex; flex-direction: column; align-items: center;">
+                <span>vs</span>
+                <span class="goal-caption">Goal: 3</span>
+            </div>
+            <div class="score-box">
+                <span class="score-label" id="op-name">BOT</span>
+                <span id="o-score" style="color: var(--accent-lose)">0</span>
+            </div>
+        </div>
+        <div class="battlefield">
+            <div class="fighter" id="p1-fighter"></div>
+            <div class="fighter" id="p2-fighter"></div>
+        </div>
+        <div class="controls" id="controls">
+            <button class="game-btn" onclick="makeMove('rock')">Rock</button>
+            <button class="game-btn" onclick="makeMove('paper')">Paper</button>
+            <button class="game-btn" onclick="makeMove('scissors')">Scissors</button>
+        </div>
+        <div class="status-container">
+            <div class="winner-text" id="status-text">Choose your weapon!</div>
+        </div>
+        <div id="match-overlay" class="hidden">
+            <div class="loader"></div>
+            <h2 id="match-status">Scanning lobby...</h2>
+            <button onclick="cancelMatch()" style="margin-top:20px; padding:10px 20px; cursor:pointer; background:white; border:1px solid #ccc; border-radius:5px;">Cancel</button>
+        </div>
+    </div>
+
+    <div class="corner-actions">
+        <button class="action-btn" onclick="showLeaderboard()">🏆 Leaders</button>
+        <button class="action-btn" onclick="showMyStats()">📊 My Stats</button>
+    </div>
+
+    <div id="leaderboard-modal" class="modal-overlay hidden">
+        <div class="modal-content lb-content">
+            <button class="close-modal-btn" onclick="closeLeaderboard()">×</button>
+            <h2>Top Players</h2>
+            <div class="lb-header">
+                <span>Rank</span>
+                <span>Player</span>
+                <span>Wins</span>
+            </div>
+            <div id="leaderboard-list" class="lb-list"></div>
+        </div>
+    </div>
+
+    <div id="stats-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="close-modal-btn" onclick="closeStats()">×</button>
+            <h2>Player Profile</h2>
+            <div class="stat-row">
+                <span class="stat-label">USER</span>
+                <span class="stat-value" id="modal-email">...</span>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-box win-box">
+                    <span class="big-num" id="modal-wins">0</span>
+                    <span class="label">WINS</span>
+                </div>
+                <div class="stat-box lose-box">
+                    <span class="big-num" id="modal-losses">0</span>
+                    <span class="label">LOSSES</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const SUPABASE_URL = 'https://plowkappobhtijindnds.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsb3drYXBwb2JodGlqaW5kbmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODAzNzEsImV4cCI6MjA4MjE1NjM3MX0.74LB8wzQhivYiSrWILiYX62AIbhe7NzvYk2KwnZIPEY';
+        const TABLE_NAME = 'rsp_player_stats';
+
+        const gameClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
+
+        // --- STATE ---
+        let user = null;
+        let mode = 'bot';
+        let matchId = null;
+        let channel = null;
+        let myScore = 0;
+        let opScore = 0;
+
+        // --- AUTH & SETUP ---
+        gameClient.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                user = session.user;
+                const shortEmail = user.email.split('@')[0];
+                document.getElementById('user-info').style.display = 'block';
+                document.getElementById('user-email').innerText = shortEmail;
+                document.getElementById('auth-btn').innerText = 'Logout';
+                if (window.location.hash.includes('access_token')) history.replaceState(null, '', window.location.pathname);
+                
+                // Ensure email is synced (The SQL function handles the numbers, we just sync the name)
+                await gameClient.from(TABLE_NAME).upsert({ user_id: user.id, email: shortEmail }, { onConflict: 'user_id', ignoreDuplicates: false });
+            } else {
+                user = null;
+                document.getElementById('user-info').style.display = 'none';
+                document.getElementById('auth-btn').innerText = 'Login with Google';
+            }
+        });
+
+        function handleAuth() {
+            if (user) {
+                gameClient.auth.signOut();
+                localStorage.clear();
+                window.location.href = window.location.pathname;
+            } else {
+                gameClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+            }
+        }
+
+        // --- NEW: SERVER-SIDE STATS UPDATE ---
+        async function incrementStat(isWin) {
+            if (!user) return; 
+
+            // Show visual feedback
+            const status = document.getElementById('status-text');
+            const originalText = status.innerText;
+            status.innerText = "SAVING TO DB...";
+            
+            // Call the SQL function we created
+            const { error } = await gameClient.rpc('update_player_stats', { 
+                player_uuid: user.id, 
+                is_win: isWin 
+            });
+
+            if (error) {
+                console.error("RPC ERROR:", error);
+                alert("DATABASE ERROR: " + error.message + "\nDid you run the SQL script?");
+                status.innerText = "SAVE FAILED";
+            } else {
+                console.log("Stats Saved via RPC");
+                // Restore text after brief delay
+                setTimeout(() => {
+                    if(status.innerText === "SAVING TO DB...") status.innerText = originalText;
+                }, 500);
+            }
+        }
+
+        // --- GAME LOGIC ---
+        function determineWinner(p1, p2) {
+            const status = document.getElementById('status-text');
+            let winner = 'draw';
+            
+            if (p1 === p2) {
+                status.innerText = "Draw!"; status.style.color = "grey";
+            } else if (
+                (p1 === 'rock' && p2 === 'scissors') ||
+                (p1 === 'paper' && p2 === 'rock') ||
+                (p1 === 'scissors' && p2 === 'paper')
+            ) {
+                status.innerText = "You Win Round!"; status.style.color = "var(--accent-win)";
+                myScore++; winner = 'player';
+                
+                // UPDATE IMMEDIATELY ON WIN
+                incrementStat(true);
+
+            } else {
+                status.innerText = "Opponent Wins Round!"; status.style.color = "var(--accent-lose)";
+                opScore++; winner = 'opponent';
+                
+                // UPDATE IMMEDIATELY ON LOSS
+                incrementStat(false);
+            }
+            
+            document.getElementById('p-score').innerText = myScore;
+            document.getElementById('o-score').innerText = opScore;
+
+            if (myScore >= 3 || opScore >= 3) {
+                const isWin = myScore >= 3;
+                setTimeout(() => {
+                    status.innerText = isWin ? "🏆 MATCH WON! 🏆" : "💀 MATCH LOST! 💀";
+                    status.style.color = isWin ? "#ffd700" : "var(--accent-lose)";
+                }, 600); // Small delay so "Saving..." text doesn't overwrite Win text
+                
+                setTimeout(() => { resetBoard(); document.getElementById('status-text').innerText = "NEW GAME START!"; }, 4000); 
+                return true; 
+            }
+            return false; 
+        }
+
+        // --- STANDARD FUNCTIONS ---
+        function getHandHTML(type) {
+            if(type === 'rock') return '<div class="rock"><div class="hand-shape"></div></div>';
+            if(type === 'paper') return '<div class="paper"><div class="hand-shape"></div></div>';
+            if(type === 'scissors') return '<div class="scissors"><div class="hand-shape"><div class="icon-extras"></div></div></div>';
+            return '';
+        }
+
+        function initBackground() {
+            const container = document.getElementById('bg-container');
+            const types = ['rock', 'paper', 'scissors'];
+            container.innerHTML = '';
+            for(let i=0; i<25; i++) {
+                const el = document.createElement('div');
+                el.classList.add('floater');
+                el.style.left = Math.random() * 100 + '%';
+                el.style.animationDuration = (10 + Math.random() * 15) + 's';
+                el.style.animationDelay = '-' + (Math.random() * 20) + 's';
+                el.innerHTML = getHandHTML(types[Math.floor(Math.random() * types.length)]);
+                container.appendChild(el);
+            }
+        }
+
+        function startBotGame() {
+            mode = 'bot';
+            document.body.classList.add('game-mode-active');
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('op-name').innerText = "BOT";
+            resetBoard();
+        }
+
+        async function startOnlineGame() {
+            if (!user) return alert("Please login first!");
+            mode = 'online';
+            document.body.classList.add('game-mode-active');
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('match-overlay').classList.remove('hidden');
+            document.getElementById('controls').classList.add('hidden');
+            document.getElementById('match-status').innerText = "Scanning lobby...";
+
+            const { data: openMatches } = await gameClient.from('matches').select('*').eq('status', 'waiting').neq('player1_id', user.id).limit(1);
+
+            if (openMatches && openMatches.length > 0) {
+                const match = openMatches[0];
+                matchId = match.id;
+                await gameClient.from('matches').update({ player2_id: user.id, status: 'playing' }).eq('id', matchId);
+                initOnlineMatch(matchId, 'player2');
+                document.getElementById('controls').classList.remove('hidden'); 
+            } else {
+                const { data: newMatch } = await gameClient.from('matches').insert({ player1_id: user.id, status: 'waiting' }).select().single();
+                matchId = newMatch.id;
+                initOnlineMatch(matchId, 'player1');
+            }
+        }
+
+        function initOnlineMatch(id, role) {
+            const isP1 = role === 'player1';
+            const statusEl = document.getElementById('match-status');
+            if (isP1) statusEl.innerText = "Waiting for player...";
+            else document.getElementById('match-overlay').classList.add('hidden');
+
+            channel = gameClient.channel(`match:${id}`)
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${id}` }, 
+                (payload) => {
+                    const match = payload.new;
+                    if (match.status === 'playing' && isP1) {
+                        document.getElementById('controls').classList.remove('hidden');
+                        document.getElementById('match-overlay').classList.add('hidden');
+                        document.getElementById('op-name').innerText = "ONLINE";
+                    }
+                    const myMove = isP1 ? match.p1_move : match.p2_move;
+                    const opMove = isP1 ? match.p2_move : match.p1_move;
+                    if (opMove && !myMove) document.getElementById('status-text').innerText = "Opponent Ready!";
+                    if (myMove && opMove) revealRound(myMove, opMove);
+                })
+                .subscribe();
+        }
+
+        function cancelMatch() {
+            if (matchId) gameClient.from('matches').delete().eq('id', matchId);
+            goHome();
+        }
+
+        async function makeMove(choice) {
+            document.getElementById('controls').style.pointerEvents = 'none';
+            document.getElementById('controls').style.opacity = '0.5';
+
+            if (mode === 'bot') {
+                const moves = ['rock', 'paper', 'scissors'];
+                revealRound(choice, moves[Math.floor(Math.random() * 3)]);
+            } else {
+                const { data } = await gameClient.from('matches').select('player1_id').eq('id', matchId).single();
+                const isP1 = data.player1_id === user.id;
+                const update = isP1 ? { p1_move: choice } : { p2_move: choice };
+                await gameClient.from('matches').update(update).eq('id', matchId);
+                document.getElementById('status-text').innerText = "Waiting for opponent...";
+            }
+        }
+
+        function revealRound(p1, p2) {
+            const p1El = document.getElementById('p1-fighter');
+            const p2El = document.getElementById('p2-fighter');
+            p1El.innerHTML = getHandHTML('rock'); p2El.innerHTML = getHandHTML('rock');
+            p1El.classList.add('shake'); p2El.classList.add('shake');
+
+            setTimeout(() => {
+                p1El.classList.remove('shake'); p2El.classList.remove('shake');
+                p1El.innerHTML = getHandHTML(p1); p2El.innerHTML = getHandHTML(p2);
+                p1El.classList.add('pop'); p2El.classList.add('pop');
+                
+                const isMatchOver = determineWinner(p1, p2);
+
+                if (mode === 'online') {
+                    setTimeout(async () => {
+                        await gameClient.from('matches').update({ p1_move: null, p2_move: null }).eq('id', matchId);
+                        resetRoundUI();
+                    }, 2500);
+                } else {
+                    if (!isMatchOver) setTimeout(resetRoundUI, 2000);
+                }
+            }, 1000);
+        }
+
+        function resetRoundUI() {
+            document.getElementById('controls').style.pointerEvents = 'auto';
+            document.getElementById('controls').style.opacity = '1';
+            document.getElementById('status-text').innerText = "Next Round!";
+            document.getElementById('p1-fighter').classList.remove('pop');
+            document.getElementById('p2-fighter').classList.remove('pop');
+        }
+
+        function goHome() {
+            if(channel) gameClient.removeChannel(channel);
+            document.body.classList.remove('game-mode-active');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('home-screen').classList.remove('hidden');
+            document.getElementById('match-overlay').classList.add('hidden');
+            resetBoard();
+        }
+
+        function resetBoard() {
+            myScore = 0; opScore = 0;
+            document.getElementById('p-score').innerText = 0;
+            document.getElementById('o-score').innerText = 0;
+            document.getElementById('p1-fighter').innerHTML = getHandHTML('rock');
+            document.getElementById('p2-fighter').innerHTML = getHandHTML('rock');
+            document.getElementById('status-text').innerText = "Choose your weapon!";
+            document.getElementById('controls').style.pointerEvents = 'auto';
+            document.getElementById('controls').style.opacity = '1';
+        }
+
+        async function showMyStats() {
+            if (!user) return alert("Please login first!");
+            const { data, error } = await gameClient.from(TABLE_NAME).select('*').eq('user_id', user.id).maybeSingle();
+            if (error) return alert("Error: " + error.message);
+            if (!data) return alert("No stats found. Play a game first!");
+            
+            document.getElementById('modal-email').innerText = data.email || "Unknown";
+            document.getElementById('modal-wins').innerText = data.wins;
+            document.getElementById('modal-losses').innerText = data.losses;
+            document.getElementById('stats-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('stats-modal').classList.add('active'), 10);
+        }
+
+        async function showLeaderboard() {
+            document.getElementById('leaderboard-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('leaderboard-modal').classList.add('active'), 10);
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '<div class="loader"></div>';
+            
+            const { data, error } = await gameClient.from(TABLE_NAME).select('email, wins').order('wins', { ascending: false }).limit(10);
+            list.innerHTML = '';
+            if (error || !data) { list.innerHTML = 'Error loading leaders'; return; }
+            
+            data.forEach((p, i) => {
+                list.innerHTML += `<div class="lb-row"><span class="lb-rank">#${i+1}</span><span class="lb-name">${p.email}</span><span class="lb-wins">${p.wins} 🏆</span></div>`;
+            });
+        }
+
+        function closeStats() { document.getElementById('stats-modal').classList.remove('active'); setTimeout(() => document.getElementById('stats-modal').classList.add('hidden'), 300); }
+        function closeLeaderboard() { document.getElementById('leaderboard-modal').classList.remove('active'); setTimeout(() => document.getElementById('leaderboard-modal').classList.add('hidden'), 300); }
+        initBackground();
+    </script>
+</body>
+</html>

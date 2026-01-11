@@ -31,7 +31,199 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            /* Ensure main content sits above the sidebar backgrounds if they overlap */
+            position: relative; 
+            z-index: 1; 
         }
+
+        /* =========================================
+           🐱 LEFT SIDEBAR TACOCAT STYLES (NEW)
+           ========================================= */
+        #left-sidebar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 300px; /* Fixed width for the sidebar area */
+            z-index: 0; /* Sits behind the main content scrolling area */
+            pointer-events: none; /* Allows clicks to pass through empty areas */
+            overflow: visible;
+        }
+
+        /* The Wooden Shelf */
+        .shelf-image {
+            position: absolute;
+            /* Adjust 'top' to move the whole setup up or down on the screen */
+            top: 45%; 
+            left: -20px; /* Slight negative margin to make it look attached to the edge */
+            width: 320px; 
+            height: auto;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+        }
+
+        /* Container holding all the cat parts */
+        /* =========================================
+           🐱 RIGHT SIDEBAR TACOCAT STYLES (UPDATED)
+           ========================================= */
+        #left-sidebar-container { /* Renaming logic internally to Right */
+            position: fixed;
+            top: 0;
+            right: 0; /* MOVED TO RIGHT */
+            left: auto; /* Unset left */
+            height: 100vh;
+            width: 300px; 
+            z-index: 9999; /* ABOVE EVERYTHING */
+            pointer-events: none; 
+            overflow: visible;
+        }
+
+        /* The Wooden Shelf */
+        .shelf-image {
+            position: absolute;
+            top: 210px; 
+            right: -20px; /* Anchored to the Right edge */
+            left: auto;
+            width: 320px; 
+            height: auto;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+        }
+
+        /* Container holding all the cat parts */
+        #tacocat-container {
+            position: absolute;
+            top: calc(45% - 105px); /* Moves cat up to sit ON the shelf */
+            right: 40px; /* Distance from right edge */
+            width: 220px; 
+            height: 180px;
+            pointer-events: auto; 
+        }
+
+        .cat-part {
+            position: absolute;
+            will-change: transform; 
+        }
+
+        /* --- STITCHING COORDINATES --- */
+        /* I have tightened these values to close the gaps */
+
+        /* 1. TAIL (Back Left) */
+        #cat-tail {
+            width: 200px;
+            top: -20px;      /* Move Down to hit body center */
+            left: -100px;    /* Tuck into the back of the taco */
+            z-index: 3;
+            transform-origin: 100% 50%; 
+        }
+
+        /* 2. BACK PAWS */
+        .cat-back-paw {
+            width: 170px; 
+            z-index: 2; /* Behind the body */
+            filter: brightness(1) sepia(0.2); 
+        }
+        
+        #paw-back-left { 
+            /* Moved down to floor level */
+            top: 10px; 
+            /* Aligned with back of taco */
+            left: -65px; 
+            transform-origin: top center; 
+        }
+        
+        #paw-back-right { 
+            /* Moved down to floor level */
+            top: 30px; 
+            /* Spaced slightly right */
+            left: -65px; 
+            transform-origin: top center; 
+        }
+
+        /* --- FRONT PAWS (The main fix) --- */
+        .cat-front-paw {
+            /* FIXED: Changed from 120px to 60px so they aren't giant */
+            width: 160px; 
+            z-index: 4; /* Kept high as requested */
+        }
+        
+        #paw-front-left { 
+            /* Moved down to floor level */
+            top: 20px; 
+            /* Aligned with front of taco (under head) */
+            left: 75px; 
+            transform-origin: top center; 
+        }
+        
+        #paw-front-right { 
+            /* Moved down to floor level */
+            top: 35px; 
+            /* Spaced slightly right */
+            left: 75px; 
+            transform-origin: top center; 
+        }
+
+        /* 3. BODY (The Anchor) */
+        #cat-body {
+            width: 230px;
+            top: -35px;
+            left: -30px;
+            z-index: 5;
+        }
+
+        /* 4. HEAD (Front Right) */
+        #cat-head {
+            width: 230px;
+            top: -45px;      /* Lowered slightly to sit on neck */
+            left: 50px;    /* Pulled left to connect to body */
+            z-index: 10;
+            transform-origin: center bottom; 
+        }
+
+        /* 5. FRONT PAWS */
+        
+
+
+        /* --- ANIMATIONS --- */
+        /* Independent wobbles */
+
+        @keyframes tailWag {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(20deg); }
+        }
+        #cat-tail { animation: tailWag 2.5s infinite ease-in-out; }
+
+        @keyframes headBob {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(4px) rotate(-3deg); }
+        }
+        #cat-head { animation: headBob 3s infinite ease-in-out; }
+
+        @keyframes bodyHover {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(2px) rotate(1deg); }
+        }
+        #cat-body { animation: bodyHover 4s infinite ease-in-out 0.5s; }
+
+        /* Paw wiggles - staggered delays for independence */
+        @keyframes pawMove1 {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            50% { transform: rotate(-10deg) translateY(-2px); }
+        }
+        @keyframes pawMove2 {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            50% { transform: rotate(8deg) translateY(-2px); }
+        }
+
+        #paw-front-left { animation: pawMove1 1.2s infinite alternate ease-in-out; }
+        #paw-front-right { animation: pawMove2 1.4s infinite alternate ease-in-out 0.3s; }
+        #paw-back-left { animation: pawMove1 1.5s infinite alternate ease-in-out 0.7s; }
+        #paw-back-right { animation: pawMove2 1.3s infinite alternate ease-in-out 1s; }
+
+        /* Hover effect on the whole cat container */
+        #tacocat-container:hover .cat-part {
+            /* Speed up animations slightly on hover */
+            animation-duration: 0.5s !important;
+        }
+
 
         /* --- SERIOUS HEADER --- */
         header {
@@ -145,6 +337,69 @@
             font-size: 0.9rem;
             opacity: 0.7;
             margin-top: 10px;
+        }
+
+        /* =========================================
+           💬 SPEECH BUBBLE STYLES (UPDATED: TOP CENTER)
+           ========================================= */
+        .speech-bubble {
+            position: absolute;
+            /* Move well above the cat's head */
+            top: -140px; 
+            /* Center horizontally relative to the cat container */
+            left: 50%;   
+            right: auto; /* Remove the old side positioning */
+            
+            /* Pretty Styling */
+            background: #ffffff;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 20px;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            font-size: 0.9rem;
+            font-weight: bold;
+            line-height: 1.4;
+            min-width: 140px;
+            text-align: center;
+            
+            /* Shadows for depth */
+            box-shadow: 
+                0 10px 20px rgba(0,0,0,0.19), 
+                0 6px 6px rgba(0,0,0,0.23);
+            
+            z-index: 100;
+            opacity: 0; 
+            /* Start state: Centered + Scaled Down */
+            /* We include translateX(-50%) to keep it centered! */
+            transform: translateX(-50%) scale(0.8);
+            pointer-events: none; 
+            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* The Triangle Pointer (Pointing DOWN) */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            top: 100%; /* Move to the bottom edge of the bubble */
+            left: 50%; /* Center along the bottom */
+            margin-left: -10px; /* Offset left by half the width to center perfectly */
+            
+            width: 0;
+            height: 0;
+            border-style: solid;
+            /* Triangle logic: 15px top (white), 0 bottom, 10px sides (transparent) */
+            border-width: 15px 10px 0 10px; 
+            border-color: #ffffff transparent transparent transparent;
+            
+            /* Small shadow to blend it */
+            filter: drop-shadow(0 2px 1px rgba(0,0,0,0.1));
+        }
+
+        /* Trigger state */
+        .speech-bubble.show {
+            opacity: 1;
+            /* Keep it centered while scaling up to 1 */
+            transform: translateX(-50%) scale(1);
         }
 
         /* =========================================================
@@ -293,6 +548,50 @@
         @keyframes bounce {
             from { transform: scale(1.3) rotate(-10deg) translateY(0); }
             to { transform: scale(1.3) rotate(-10deg) translateY(-5px); }
+        }
+
+        /* =========================================================
+        👊 ROCK PAPER SCISSORS CARD (ARCADE STYLE)
+        ========================================================= */
+        #rsp-card {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); /* Fiery Red start */
+            border: 3px solid #fff;
+            box-shadow: 0 10px 20px rgba(255, 75, 43, 0.3);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* The "VS" Diagonal Split Effect */
+        #rsp-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, transparent 50%, #4facfe 50%); /* Ice Blue other half */
+            z-index: 0;
+            transition: transform 0.4s ease;
+        }
+
+        #rsp-card:hover::before {
+            transform: scale(1.1) rotate(2deg); /* Shift the battle line on hover */
+        }
+
+        #rsp-card .card-icon {
+            font-size: 3.5rem;
+            z-index: 2;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #rsp-card:hover .card-icon {
+            transform: scale(1.4) rotate(-15deg);
+        }
+
+        #rsp-card .card-title,
+        #rsp-card .card-desc {
+            z-index: 2;
+            position: relative;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
         }
 
         /* =========================================================
@@ -466,6 +765,13 @@
         /* =========================================
            📱 MOBILE RESPONSIVE STYLES
            ========================================= */
+        @media (max-width: 1100px) {
+            /* Hide the sidebar on smaller screens to prevent overlap with main content */
+            #left-sidebar-container {
+                display: none;
+            }
+        }
+
         @media (max-width: 768px) {
             header { padding: 50px 20px 30px; }
             .title-container { flex-direction: column; gap: 15px; }
@@ -493,6 +799,22 @@
 </head>
 <body>
 
+    <div id="left-sidebar-container">
+        <img src="assets/shelf.png" class="shelf-image" alt="Wooden Shelf">
+
+        <div id="tacocat-container">
+            <div id="cat-speech" class="speech-bubble">Meowdy!</div>
+            <img src="assets/3.png" class="cat-part" id="cat-tail" alt="Tacocat Tail">
+            <img src="assets/7.png" class="cat-part cat-back-paw" id="paw-back-left" alt="Back Left Paw">
+            <img src="assets/6.png" class="cat-part cat-back-paw" id="paw-back-right" alt="Back Right Paw">
+
+            <img src="assets/2.png" class="cat-part" id="cat-body" alt="Tacocat Body">
+
+            <img src="assets/1.png" class="cat-part" id="cat-head" alt="Tacocat Head">
+            <img src="assets/5.png" class="cat-part cat-front-paw" id="paw-front-left" alt="Front Left Paw">
+            <img src="assets/4.png" class="cat-part cat-front-paw" id="paw-front-right" alt="Front Right Paw">
+        </div>
+    </div>
     <header>
         <div class="title-container">
             <img src="assets/ssamjjang.png" alt="Ssamjjang Logo" class="logo-img">
@@ -513,6 +835,14 @@
         // 🎨 CONFIGURATION: DEFINE YOUR BUTTONS
         // ==========================================
         const projectList = [
+            //
+            //{
+            //    title: "Rock Scissor Paper Shoot!",
+            //    desc: "Who is the Ultimate Champion?",
+            //   icon: "🥊", // Boxing glove or use ✂️
+            //    folder: "rock_scissor_paper", // CHANGE THIS to your actual folder name
+            //    id: "rsp-card", 
+            //},      
             {
                 title: "ImSheeponator",
                 desc: "How Sheepish is your Sheep Imitation?",
@@ -613,6 +943,39 @@
                 }, duration * 1000);
             }, 100); // Spawn a new bit every 100ms
         }
+
+        const phrases = [
+            "Meowdy, mate!",
+            "Taco 'bout a nice website!",
+            "Designed by Sally Lim!",
+            "Code is Purr-fect!",
+            "Stay pawsitive!",
+            "Have a meowgical day!",
+        ];
+
+        const bubble = document.getElementById('cat-speech');
+        let phraseIndex = 0;
+
+        function updateSpeech() {
+            // 1. Fade out
+            bubble.classList.remove('show');
+
+            // 2. Wait for fade out, then change text and fade in
+            setTimeout(() => {
+                // Update text
+                phraseIndex = (phraseIndex + 1) % phrases.length;
+                bubble.innerText = phrases[phraseIndex];
+                
+                // Fade in
+                bubble.classList.add('show');
+            }, 500); // Wait 0.5s for the fade out to finish
+        }
+
+        // Initialize: Show first message immediately
+        setTimeout(() => bubble.classList.add('show'), 1000);
+
+        // Cycle every 10 seconds (10000ms)
+        setInterval(updateSpeech, 10000);
     </script>
 </body>
 </html>
