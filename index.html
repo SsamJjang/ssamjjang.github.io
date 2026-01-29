@@ -31,9 +31,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* Ensure main content sits above the sidebar backgrounds if they overlap */
             position: relative; 
             z-index: 1; 
+            /* THE FIX: Prevents horizontal scrolling */
+            overflow-x: hidden; 
         }
 
         /* =========================================
@@ -42,12 +43,13 @@
         #left-sidebar-container {
             position: fixed;
             top: 0;
-            left: 0;
+            right: 0; 
             height: 100vh;
-            width: 300px; /* Fixed width for the sidebar area */
-            z-index: 0; /* Sits behind the main content scrolling area */
-            pointer-events: none; /* Allows clicks to pass through empty areas */
-            overflow: visible;
+            width: 300px; 
+            z-index: 9999;
+            pointer-events: none; 
+            /* Ensure no internal parts push the container's width */
+            overflow: hidden; 
         }
 
         /* The Wooden Shelf */
@@ -59,6 +61,55 @@
             width: 320px; 
             height: auto;
             filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+        }
+
+        /* =========================================
+        ✨ PRETTY FOOTER STYLES
+        ========================================= */
+        .site-footer {
+            margin-top: auto;
+            padding: 40px 20px;
+            width: 100%;
+            border-top: 1px solid #1c1c1c; 
+            background: rgba(10, 10, 10, 0.9);
+            display: flex;
+            justify-content: center;
+        }
+
+        .footer-content {
+            text-align: center;
+        }
+
+        .site-footer p {
+            color: var(--text-sub);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .footer-link {
+            color: #585858;
+            text-decoration: none;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            border: 1px solid #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .footer-link:hover {
+            color: #fff;
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
         }
 
         /* Container holding all the cat parts */
@@ -551,50 +602,6 @@
         }
 
         /* =========================================================
-        👊 ROCK PAPER SCISSORS CARD (ARCADE STYLE)
-        ========================================================= */
-        #rsp-card {
-            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); /* Fiery Red start */
-            border: 3px solid #fff;
-            box-shadow: 0 10px 20px rgba(255, 75, 43, 0.3);
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* The "VS" Diagonal Split Effect */
-        #rsp-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, transparent 50%, #4facfe 50%); /* Ice Blue other half */
-            z-index: 0;
-            transition: transform 0.4s ease;
-        }
-
-        #rsp-card:hover::before {
-            transform: scale(1.1) rotate(2deg); /* Shift the battle line on hover */
-        }
-
-        #rsp-card .card-icon {
-            font-size: 3.5rem;
-            z-index: 2;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        #rsp-card:hover .card-icon {
-            transform: scale(1.4) rotate(-15deg);
-        }
-
-        #rsp-card .card-title,
-        #rsp-card .card-desc {
-            z-index: 2;
-            position: relative;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
-        }
-
-        /* =========================================================
            👾 RETRO IBM / GLITCH CARD STYLES 
            ========================================================= */
         #hacker-card {
@@ -826,8 +833,13 @@
     <div class="project-grid" id="grid">
         </div>
 
-    <footer>
-        &copy; 2025 Prototype Neo Industries. All rights reserved.
+    <footer class="site-footer">
+        <div class="footer-content">
+            <p>&copy; 2026 Prototype Neo Industries. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="footer.html" class="footer-link">Privacy Policy</a>
+            </div>
+        </div>
     </footer>
 
     <script>
@@ -835,14 +847,6 @@
         // 🎨 CONFIGURATION: DEFINE YOUR BUTTONS
         // ==========================================
         const projectList = [
-            //
-            //{
-            //    title: "Rock Scissor Paper Shoot!",
-            //    desc: "Who is the Ultimate Champion?",
-            //   icon: "🥊", // Boxing glove or use ✂️
-            //    folder: "rock_scissor_paper", // CHANGE THIS to your actual folder name
-            //    id: "rsp-card", 
-            //},      
             {
                 title: "ImSheeponator",
                 desc: "How Sheepish is your Sheep Imitation?",
