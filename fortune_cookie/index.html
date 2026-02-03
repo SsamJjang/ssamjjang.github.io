@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Fortune Cookie</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f4;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            /* Improves tap response on mobile */
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1 {
+            font-weight: bold;
+            font-size: clamp(1.5rem, 5vw, 2.5rem); /* Scales with screen size */
+            margin-bottom: 5vh;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        /* Game Container */
+        .game-area {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* The Cookie Image */
+        #cookie-img {
+            width: 90%; /* Responsive width */
+            max-width: 800px; 
+            height: auto;
+            cursor: pointer;
+            z-index: 2;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
+            transition: transform 0.1s ease-out;
+        }
+
+        #cookie-img:active {
+            transform: scale(0.98);
+        }
+
+        /* The Hammer Image */
+        #hammer-img {
+            position: absolute;
+            top: 0%;
+            right: 0%;
+            width: 50%; /* Relative to container */
+            height: auto;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 5;
+            transform-origin: bottom right;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+        }
+
+        /* Animations */
+        .shake {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        .hammer-swing {
+            animation: swing 0.2s ease-in-out;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        @keyframes swing {
+            0% { opacity: 1; transform: rotate(30deg) translate(0, 0); }
+            50% { transform: rotate(-60deg) translate(-20%, 20%); }
+            100% { opacity: 0; transform: rotate(30deg) translate(0, 0); }
+        }
+
+        /* The Fortune Message */
+        #fortune-display {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%; /* Fits mobile screens */
+            max-width: 400px;
+            text-align: center;
+            padding: 40px 20px;
+            background: #ffffff;
+            border: 2px solid #000;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            z-index: 10;
+            animation: fadeUp 0.5s ease-out;
+            box-sizing: border-box;
+        }
+
+        .fortune-text {
+            font-size: clamp(1rem, 4vw, 1.3rem);
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .timer-msg {
+            color: #666;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translate(-50%, -40%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1 id="status-text">Click to Crack</h1>
+
+    <div class="game-area">
+        <img id="cookie-img" src="assets/cookie/1.png" alt="Fortune Cookie">
+        <img id="hammer-img" src="assets/cookie/hammer.png" alt="Hammer">
+        
+        <div id="fortune-display">
+            <p class="fortune-text" id="fortune-msg"></p>
+            <div style="width: 50px; height: 2px; background: #000; margin: 20px auto;"></div>
+            <p class="timer-msg">Return in 24 hours</p>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const COOKIE_HP_MAX = 100;
+        const MIN_DMG = 10;
+        const MAX_DMG = 40;
+        const COOLDOWN_HOURS = 24; 
+        
+        // --- State ---
+        let currentHp = COOKIE_HP_MAX;
+        let isCracked = false;
+
+        // --- Data ---
+        const fortunes = [
+            "The early bird gets the worm, but the second mouse gets the cheese.",
+            "The map will make sense after the turn.",
+            "What you are preparing for may not look like preparation yet.",
+            "The meaning of today will not be clear today.",
+            "Some outcomes arrive wearing the wrong name.",
+            "What feels like repetition may be refinement.",
+            "The future sometimes answers indirectly.",
+            "An ending may simply change its role.",
+            "What seems stable may only be paused.",
+            "The moment you remember later has not happened yet.",
+            "What you carry lightly lasts longer.",
+            "The path will explain itself only after it is walked.",
+            "What appears missing may be intentionally absent.",
+            "The future is listening to how you interpret the present.",
+            "Some truths require distance to be visible.",
+            "What you expect may arrive rearranged.",
+            "A delay may be part of the design.",
+            "The next insight will simplify something complicated.",
+            "What you resist may be teaching timing.",
+            "Not everything unresolved is unfinished.",
+            "The future favors those who revise gently.",
+            "What feels accidental may be well-placed.",
+            "A contradiction will clarify rather than confuse.",
+            "The answer may arrive without resolving the question.",
+            "Some progress looks like standing still from the inside.",
+            "What you misunderstand now may later protect you.",
+            "The future often edits rather than replaces.",
+            "What you overlook may be holding balance.",
+            "A familiar choice will feel unfamiliar for a reason.",
+            "The right context will change the meaning entirely.",
+            "What seems inefficient may be necessary.",
+            "The future remembers patterns more than intentions.",
+            "A small misalignment will correct itself.",
+            "What feels incomplete may already be sufficient.",
+            "The future may reward reinterpretation.",
+            "Something ordinary will later feel essential.",
+            "The long view will forgive today’s uncertainty.",
+            "What you seek clarity on may require ambiguity first.",
+            "The future sometimes waits for understanding, not action.",
+            "What you discard may not be finished with you.",
+            "An unanswered question may guide better than an answer.",
+            "The shape of success may change mid-journey.",
+            "What feels fragile may be flexible.",
+            "The future will reveal why certain options disappeared.",
+            "A subtle shift will reframe everything else.",
+            "What you thought was the point may have been the setup.",
+            "The future tends to reuse good ideas differently.",
+            "What seems delayed may be absorbing context.",
+            "An interruption will clarify priorities.",
+            "The future may reward awareness over certainty.",
+            "What you remember later will feel obvious then.",
+            "The present is practicing for something unnamed.",
+            "A closed loop will open unexpectedly.",
+            "The future rarely explains itself immediately.",
+            "What feels inefficient may be preserving options.",
+            "The next chapter may redefine the last.",
+            "What you take for granted may soon feel intentional.",
+            "The future may soften sharp conclusions.",
+            "A misplaced effort will later feel well-spent.",
+            "What feels final may be transitional.",
+            "The future prefers coherence over speed.",
+            "Something unresolved will resolve indirectly.",
+            "What you are circling is not avoidance.",
+            "The future often reveals cause after effect.",
+            "A familiar frustration will lose relevance.",
+            "What feels misaligned may be early.",
+            "The future may ask you to notice rather than decide.",
+            "An old conclusion will need revision.",
+            "What you think is missing may be resting.",
+            "The future may value restraint as information.",
+            "Something will connect once context arrives.",
+            "What feels scattered may be collecting.",
+            "The future will clarify what mattered.",
+            "An apparent detour will complete the picture.",
+            "What you hesitate on may require perspective, not courage.",
+            "The future may reward patience differently than expected.",
+            "A quiet realization will outlast louder ones.",
+            "What seems inefficient may protect flexibility.",
+            "The future often resolves tension sideways.",
+            "Something assumed will need translation.",
+            "What you are waiting for may be forming conditions.",
+            "The future may arrive subtly, then all at once.",
+            "What you notice next will matter later.",
+            "A closed door may quietly redirect you to the right room.",
+            "The answer you need may arrive disguised as something ordinary.",
+            "An assumption will soon prove incomplete.",
+            "A familiar pattern is nearing its end.",
+            "Something small will clarify something large.",
+            "The future may reward curiosity more than certainty.",
+            "A coincidence will feel less accidental in hindsight.",
+            "What you release may return improved.",
+            "An overlooked detail will become central.",
+            "A shift in perspective will change the outcome.",
+            "The next chapter may start mid-sentence.",
+            "What feels random now may later feel precise.",
+            "An ending will quietly free up space.",
+            "The right moment may arrive without warning.",
+            "A detour will reveal information you were missing.",
+            "The future will favor adaptability.",
+            "Something once distant is moving closer.",
+            "An old idea may find a new use.",
+            "A question will be more valuable than its answer.",
+            "What you expect least may influence you most.",
+            "A subtle choice will alter the direction.",
+            "The future will test flexibility, not strength.",
+            "Something you ignore today will ask again later.",
+            "A repeated thought may deserve attention.",
+            "An apparent setback will age differently.",
+            "The next opportunity may not announce itself.",
+            "What seems unrelated will soon connect.",
+            "A quiet realization will replace a loud assumption.",
+            "The future will borrow from the past, selectively.",
+            "Something unfinished will resolve naturally.",
+            "An interruption will change priorities.",
+            "What feels stable may soon evolve.",
+            "A small alignment will have large effects.",
+            "The future may reward those who notice patterns.",
+            "A familiar choice will produce an unfamiliar result.",
+            "What you once rushed may ask for revision.",
+            "An unexpected insight will simplify things.",
+            "Something routine will reveal depth.",
+            "The future may arrive sideways.",
+            "An old rule will stop applying.",
+            "What you prepare for may not be what arrives.",
+            "A brief moment will leave a long impression.",
+            "The future will test interpretation, not prediction.",
+            "A forgotten intention will resurface.",
+            "What feels final may simply be paused.",
+            "An indirect path will prove informative.",
+            "The future may reward awareness over effort.",
+            "A minor change will ripple outward.",
+            "What you seek may change shape.",
+            "An answer will arrive without a question.",
+            "The future will value context.",
+            "Something assumed will be reframed.",
+            "A misstep will provide clarity.",
+            "The future may favor timing over planning.",
+            "An overlooked voice will matter.",
+            "What you resist may soften.",
+            "A pattern will break quietly.",
+            "The future will surprise gently.",
+            "Something will make sense all at once.",
+            "A decision will feel lighter than expected.",
+            "The future may reward openness.",
+            "An ordinary day will stand out later.",
+            "What you wait for may already be underway.",
+            "The future will reveal what was essential.",
+            "A small truth will outgrow a big one.",
+            "Something will fall into place without force.",
+            "The future will ask for understanding, not control.",
+            "A loose thread will tie itself.",
+            "What you learn next will matter more than what you know now.",
+            "The future will feel less distant soon."
+
+        ];
+
+        // --- Elements ---
+        const cookieImg = document.getElementById('cookie-img');
+        const hammerImg = document.getElementById('hammer-img');
+        const fortuneDisplay = document.getElementById('fortune-display');
+        const fortuneMsg = document.getElementById('fortune-msg');
+        const statusText = document.getElementById('status-text');
+
+        // --- Initialization ---
+        window.addEventListener('load', checkCooldown);
+
+        function checkCooldown() {
+            const lastPlay = localStorage.getItem('fortune_last_play');
+            
+            if (lastPlay) {
+                const timePassed = Date.now() - parseInt(lastPlay);
+                const cooldownMs = COOLDOWN_HOURS * 60 * 60 * 1000;
+
+                if (timePassed < cooldownMs) {
+                    lockGame(cooldownMs - timePassed);
+                    return;
+                }
+            }
+            
+            // Ready to play
+            cookieImg.addEventListener('click', hitCookie);
+        }
+
+        function lockGame(msRemaining) {
+            isCracked = true;
+            cookieImg.src = "assets/cookie/10.png";
+            cookieImg.style.opacity = '0.5';
+            cookieImg.style.cursor = 'default';
+            cookieImg.removeEventListener('click', hitCookie);
+            
+            const hours = Math.ceil(msRemaining / (1000 * 60 * 60));
+            statusText.innerText = `Available in ${hours}h`;
+        }
+
+        // --- Game Logic ---
+        function hitCookie(e) {
+            if (isCracked) return;
+
+            // 1. Calculate Damage
+            const damage = Math.floor(Math.random() * (MAX_DMG - MIN_DMG + 1)) + MIN_DMG;
+            currentHp -= damage;
+
+            // 2. Visuals: Hammer
+            playHammerAnimation();
+
+            // 3. Update Image
+            let imgIndex = Math.floor((100 - currentHp) / 10) + 1;
+            
+            if (imgIndex < 1) imgIndex = 1;
+            if (imgIndex > 10) imgIndex = 10;
+            
+            cookieImg.src = `assets/cookie/${imgIndex}.png`;
+
+            // 4. Check Win Condition
+            if (currentHp <= 0) {
+                crackCookie();
+            } else {
+                cookieImg.classList.remove('shake');
+                void cookieImg.offsetWidth; 
+                cookieImg.classList.add('shake');
+            }
+        }
+
+        function playHammerAnimation() {
+            hammerImg.style.opacity = '1';
+            hammerImg.classList.remove('hammer-swing');
+            void hammerImg.offsetWidth;
+            hammerImg.classList.add('hammer-swing');
+            
+            setTimeout(() => {
+                hammerImg.style.opacity = '0';
+            }, 200);
+        }
+
+        function crackCookie() {
+            isCracked = true;
+            cookieImg.src = "assets/cookie/10.png";
+            
+            const randomFortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+            
+            statusText.innerText = "Opened";
+            
+            fortuneMsg.innerText = randomFortune;
+            fortuneDisplay.style.display = 'block';
+
+            localStorage.setItem('fortune_last_play', Date.now().toString());
+            
+            cookieImg.removeEventListener('click', hitCookie);
+            cookieImg.style.cursor = 'default';
+        }
+    </script>
+</body>
+</html>
