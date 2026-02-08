@@ -160,7 +160,7 @@
         const COOKIE_HP_MAX = 100;
         const MIN_DMG = 10;
         const MAX_DMG = 40;
-        const COOLDOWN_HOURS = 24; 
+        const COOLDOWN_HOURS = 0; 
         
         // --- State ---
         let currentHp = COOKIE_HP_MAX;
@@ -321,7 +321,6 @@
             "A loose thread will tie itself.",
             "What you learn next will matter more than what you know now.",
             "The future will feel less distant soon."
-
         ];
 
         // --- Elements ---
@@ -330,6 +329,10 @@
         const fortuneDisplay = document.getElementById('fortune-display');
         const fortuneMsg = document.getElementById('fortune-msg');
         const statusText = document.getElementById('status-text');
+
+        // --- Audio ---
+        // Pre-load the slam sound
+        const slamSound = new Audio('assets/slam.mp3');
 
         // --- Initialization ---
         window.addEventListener('load', checkCooldown);
@@ -365,6 +368,10 @@
         // --- Game Logic ---
         function hitCookie(e) {
             if (isCracked) return;
+
+            // 0. Play Sound (Reset time so rapid clicks play correctly)
+            slamSound.currentTime = 0;
+            slamSound.play().catch(e => console.log("Audio play failed:", e));
 
             // 1. Calculate Damage
             const damage = Math.floor(Math.random() * (MAX_DMG - MIN_DMG + 1)) + MIN_DMG;

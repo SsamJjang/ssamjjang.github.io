@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Fidelity Physics Engine (DOM-based)</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --accent-color: #00d2ff;
+            --panel-bg: rgba(0, 0, 0, 0.85);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        /* The Physics World Container */
+        #world {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        /* The Physical Object (The Ball) */
+        .phys-obj {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.5), 2px 2px 10px rgba(0,0,0,0.3);
+            will-change: transform; /* Hardware acceleration hint */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: rgba(255,255,255,0.7);
+            pointer-events: none; /* Let clicks pass through to world */
+        }
+
+        /* UI Controls */
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 280px;
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            border: 1px solid #333;
+            z-index: 100;
+        }
+
+        h2 { margin: 0 0 15px 0; font-size: 18px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        
+        .control-group { margin-bottom: 15px; }
+        label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+        
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .data-display {
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--accent-color);
+        }
+
+        .btn {
+            background: var(--accent-color);
+            border: none;
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn:hover { opacity: 0.9; }
+
+        #wind-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 100px;
+            height: 100px;
+            border: 2px solid #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.6;
+        }
+        #wind-arrow {
+            width: 80%;
+            height: 2px;
+            background: var(--accent-color);
+            position: relative;
+        }
+        #wind-arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 10px solid var(--accent-color);
+        }
+
+        .info { font-size: 10px; color: #888; margin-top: 15px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <h2>Physics Parameters</h2>
+        
+        <div class="control-group">
+            <label>Gravity (m/s²) <span id="val-gravity" class="data-display">9.81</span></label>
+            <input type="range" id="inp-gravity" min="0" max="30" step="0.1" value="9.81">
+        </div>
+
+        <div class="control-group">
+            <label>Wind Speed (m/s) <span id="val-wind-speed" class="data-display">0.0</span></label>
+            <input type="range" id="inp-wind-speed" min="0" max="50" step="0.1" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>Wind Angle (deg) <span id="val-wind-angle" class="data-display">0</span></label>
+            <input type="range" id="inp-wind-angle" min="0" max="360" step="1" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>Air Density (kg/m³) <span id="val-air-density" class="data-display">1.225</span></label>
+            <input type="range" id="inp-air-density" min="0" max="5" step="0.01" value="1.225">
+        </div>
+
+        <button class="btn" onclick="spawnObject()">Spawn Object</button>
+        <button class="btn" style="background:#ff4444; color:white;" onclick="clearWorld()">Clear World</button>
+
+        <div class="info">
+            <strong>Click anywhere</strong> to throw an object.<br>
+            Physics Model:<br>
+            • Drag Eq: Fd = 0.5 * ρ * v² * Cd * A<br>
+            • Integrator: Semi-Implicit Euler<br>
+            • Scale: 100px = 1 meter
+        </div>
+    </div>
+
+    <div id="wind-indicator">
+        <div id="wind-arrow"></div>
+    </div>
+
+    <div id="world"></div>
+
+    <script>
+        // --- CONSTANTS & CONFIGURATION ---
+        const WORLD = document.getElementById('world');
+        
+        // Physics Scale: To make 9.81m/s^2 visible on screen, we need a pixel-to-meter ratio.
+        // Let's assume 100 pixels = 1 meter. 
+        // A 1080p screen is roughly 10 meters high.
+        const PIXELS_PER_METER = 100; 
+
+        // Simulation State
+        const state = {
+            gravity: 9.81,          // m/s^2
+            windSpeed: 0.0,         // m/s
+            windAngle: 0.0,         // degrees
+            airDensity: 1.225,      // kg/m^3 (Standard sea level air)
+            restitution: 0.7,       // Bounciness (0-1)
+            groundFriction: 0.98    // Friction when touching ground
+        };
+
+        const objects = [];
+
+        // --- MATH HELPERS ---
+        const degToRad = (deg) => deg * (Math.PI / 180);
+        
+        // --- CLASS: PHYSICAL OBJECT ---
+        class PhysObject {
+            constructor(x, y, radiusPixels, massKg) {
+                this.x = x; // Position X (pixels)
+                this.y = y; // Position Y (pixels)
+                
+                // Velocity (m/s) - Internally we calculate in meters/second
+                this.vx = (Math.random() - 0.5) * 10; 
+                this.vy = (Math.random() - 0.5) * 10;
+
+                this.mass = massKg;
+                this.radius = radiusPixels;
+                
+                // Area for drag calculation (Projected Frontal Area of a sphere: A = πr²)
+                // Convert radius to meters first
+                const radiusMeters = this.radius / PIXELS_PER_METER;
+                this.area = Math.PI * (radiusMeters * radiusMeters); 
+
+                // Drag Coefficient (Cd)
+                // 0.47 is typical for a smooth sphere
+                this.cd = 0.47; 
+
+                // DOM Element creation
+                this.el = document.createElement('div');
+                this.el.className = 'phys-obj';
+                this.el.style.width = `${radiusPixels * 2}px`;
+                this.el.style.height = `${radiusPixels * 2}px`;
+                
+                // Random color based on mass
+                const hue = Math.floor(Math.random() * 360);
+                this.el.style.backgroundColor = `hsl(${hue}, 70%, 50%)`;
+                
+                // Display Mass
+                this.el.innerText = `${massKg}kg`;
+
+                WORLD.appendChild(this.el);
+            }
+
+            update(dt) {
+                // 1. Calculate Forces (F = ma)
+                // We sum all forces acting on the object.
+                let fx = 0;
+                let fy = 0;
+
+                // --- GRAVITY (F = m * g) ---
+                // Gravity acts downwards (+y in screen coords)
+                fy += this.mass * state.gravity;
+
+                // --- AERODYNAMICS (Wind & Drag) ---
+                // Drag opposes the relative velocity through the fluid.
+                // V_relative = V_object - V_wind
+                
+                // Calculate Wind Vector
+                const windVx = state.windSpeed * Math.cos(degToRad(state.windAngle));
+                const windVy = state.windSpeed * Math.sin(degToRad(state.windAngle));
+
+                // Relative Velocity
+                const relVx = this.vx - windVx;
+                const relVy = this.vy - windVy;
+                
+                // Magnitude of relative velocity (Speed)
+                const vRel = Math.sqrt(relVx*relVx + relVy*relVy);
+
+                if (vRel > 0.0001) { // Avoid divide by zero
+                    // Drag Equation: Fd = 0.5 * ρ * v² * Cd * A
+                    // Direction is opposite to relative velocity (-unit_vector)
+                    const dragMagnitude = 0.5 * state.airDensity * (vRel * vRel) * this.cd * this.area;
+
+                    // Decompose Drag Force back into X/Y
+                    // unit_vector_x = relVx / vRel
+                    const dragFx = -dragMagnitude * (relVx / vRel);
+                    const dragFy = -dragMagnitude * (relVy / vRel);
+
+                    fx += dragFx;
+                    fy += dragFy;
+                }
+
+                // 2. Integration (Semi-Implicit Euler)
+                // Acceleration = Force / Mass
+                const ax = fx / this.mass;
+                const ay = fy / this.mass;
+
+                // Update Velocity (v = v + a * dt)
+                this.vx += ax * dt;
+                this.vy += ay * dt;
+
+                // Update Position (p = p + v * dt * scale)
+                // We multiply by PPM because velocity is m/s, but position is pixels.
+                this.x += this.vx * dt * PIXELS_PER_METER;
+                this.y += this.vy * dt * PIXELS_PER_METER;
+
+                // 3. Collision Detection (World Boundaries)
+                const bounds = { width: window.innerWidth, height: window.innerHeight };
+                const r = this.radius;
+
+                // Floor
+                if (this.y + r > bounds.height) {
+                    this.y = bounds.height - r;
+                    this.vy *= -state.restitution; // Bounce
+                    this.vx *= state.groundFriction; // Friction
+                }
+                // Ceiling
+                if (this.y - r < 0) {
+                    this.y = r;
+                    this.vy *= -state.restitution;
+                }
+                // Walls
+                if (this.x + r > bounds.width) {
+                    this.x = bounds.width - r;
+                    this.vx *= -state.restitution;
+                }
+                if (this.x - r < 0) {
+                    this.x = r;
+                    this.vx *= -state.restitution;
+                }
+
+                // 4. Render
+                // Use transform for performance (sub-pixel rendering)
+                this.el.style.transform = `translate(${this.x - r}px, ${this.y - r}px)`;
+            }
+        }
+
+        // --- MAIN LOOP ---
+        let lastTime = performance.now();
+
+        function loop(now) {
+            // Calculate delta time in seconds
+            // Cap dt to avoid explosion if tab is inactive for a long time
+            let dt = (now - lastTime) / 1000;
+            if (dt > 0.05) dt = 0.05; 
+            lastTime = now;
+
+            objects.forEach(obj => obj.update(dt));
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- INPUT HANDLING ---
+        function updateUI() {
+            document.getElementById('val-gravity').innerText = state.gravity;
+            document.getElementById('val-wind-speed').innerText = state.windSpeed;
+            document.getElementById('val-wind-angle').innerText = state.windAngle;
+            document.getElementById('val-air-density').innerText = state.airDensity;
+            
+            // Update Wind Arrow Visual
+            const arrow = document.getElementById('wind-arrow');
+            arrow.style.transform = `rotate(${state.windAngle}deg)`;
+            // Scale arrow opacity/width based on speed
+            const intensity = Math.min(state.windSpeed / 50, 1);
+            document.getElementById('wind-indicator').style.opacity = 0.2 + (intensity * 0.8);
+        }
+
+        // Event Listeners for Sliders
+        document.getElementById('inp-gravity').addEventListener('input', (e) => {
+            state.gravity = parseFloat(e.target.value);
+            updateUI();
+        });
+        document.getElementById('inp-wind-speed').addEventListener('input', (e) => {
+            state.windSpeed = parseFloat(e.target.value);
+            updateUI();
+        });
+        document.getElementById('inp-wind-angle').addEventListener('input', (e) => {
+            state.windAngle = parseFloat(e.target.value);
+            updateUI();
+        });
+        document.getElementById('inp-air-density').addEventListener('input', (e) => {
+            state.airDensity = parseFloat(e.target.value);
+            updateUI();
+        });
+
+        // Spawn logic
+        function spawnObject(x, y) {
+            // Defaults
+            const spawnX = x || window.innerWidth / 2;
+            const spawnY = y || window.innerHeight / 4;
+            
+            // Random properties
+            const mass = 1 + Math.random() * 9; // 1kg to 10kg
+            const radius = 10 + Math.sqrt(mass) * 10; // Radius loosely based on mass
+            
+            objects.push(new PhysObject(spawnX, spawnY, radius, mass));
+        }
+
+        function clearWorld() {
+            objects.forEach(obj => obj.el.remove());
+            objects.length = 0;
+        }
+
+        // Mouse Interaction (Click to throw)
+        window.addEventListener('mousedown', (e) => {
+            // Ignore if clicking controls
+            if (e.target.closest('#controls')) return;
+            spawnObject(e.clientX, e.clientY);
+        });
+
+        // Initialize
+        updateUI();
+        requestAnimationFrame(loop);
+
+    </script>
+</body>
+</html>
