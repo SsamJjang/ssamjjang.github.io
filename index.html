@@ -36,6 +36,66 @@
             /* THE FIX: Prevents horizontal scrolling */
             overflow-x: hidden; 
         }
+        /* =========================================================
+        🌮 TACOCAT GAME CARD
+        ========================================================= */
+        #tacocat-card {
+            background-color: #050505; /* Deep black */
+            border: 2px solid #333;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        /* Starry Background Effect */
+        #tacocat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+                radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px, 40px 40px;
+            background-position: 0 0, 20px 20px;
+            opacity: 0.5;
+            z-index: 0;
+        }
+
+        /* The Head Image Styling */
+        #tacocat-card .card-icon img {
+            width: 200px; /* Good size for the head */
+            height: auto;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.8)); /* Pop out shadow */
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
+            position: relative;
+        }
+
+        #tacocat-card .card-title {
+            color: #FFC107; /* Taco Yellow */
+            z-index: 2;
+            position: relative;
+            text-shadow: 0 2px 0 rgba(0,0,0,0.5);
+        }
+
+        #tacocat-card .card-desc {
+            color: #888;
+            z-index: 2;
+            position: relative;
+        }
+
+        /* --- HOVER EFFECTS --- */
+        #tacocat-card:hover {
+            border-color: #FFC107;
+            box-shadow: 0 0 25px rgba(255, 193, 7, 0.2);
+            transform: translateY(-5px);
+        }
+
+        #tacocat-card:hover .card-icon img {
+            /* Head bobs and rotates on hover */
+            transform: scale(1.2) rotate(-10deg) translateY(-5px);
+        }
 
         /* =========================================
            🐱 LEFT SIDEBAR TACOCAT STYLES (NEW)
@@ -918,6 +978,14 @@
         // 🎨 CONFIGURATION: DEFINE YOUR BUTTONS
         // ==========================================
         const projectList = [
+            {
+                title: "The Tacocat Clicker",
+                desc: "Spell Tacocat Backwards",
+                // We inject the IMG tag directly here
+                icon: '<img src="assets/1.png" alt="Tacocat Head">', 
+                folder: "tacocat_clicker", 
+                id: "tacocat-card", 
+            },
             {
                 title: "The Fortune Cookie",
                 desc: "Unveil Your Daily Fortune",

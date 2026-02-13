@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Tacocat Clicker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --text-main: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation; 
+        }
+
+        /* SCORE BOARD */
+        #score-container {
+            text-align: center;
+            margin-bottom: 150px; 
+            z-index: 200; 
+            pointer-events: none; 
+        }
+        
+        #score-board {
+            font-size: 5rem;
+            font-weight: 800;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 10px;
+        }
+
+        /* =========================================
+           🌮 THE TACO STYLE
+           ========================================= */
+        .taco {
+            position: fixed; 
+            width: 70px; 
+            height: 35px;
+            background: #FFC107;
+            border-radius: 0 0 70px 70px;
+            pointer-events: none;
+            z-index: 1; 
+        }
+
+        .taco::before {
+            content: ''; position: absolute;
+            top: -4px; left: 10px;
+            width: 50px; height: 10px;
+            background: #795548;
+            border-radius: 8px;
+        }
+
+        .taco::after {
+            content: ''; position: absolute;
+            top: -8px; left: 20px;
+            width: 12px; height: 12px;
+            background: #EF5350;
+            border-radius: 50%;
+            box-shadow: 18px 2px 0 #4CAF50; 
+        }
+
+        /* =========================================
+           🐱 THE CAT
+           ========================================= */
+        #tacocat-container {
+            position: relative;
+            width: 250px;
+            height: 200px;
+            cursor: pointer;
+            transform: scale(1.6); 
+            margin-left: 80px; /* Offset for balance */
+            transition: transform 0.05s ease;
+            z-index: 100; 
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #tacocat-container:active { transform: scale(1.55); }
+
+        .cat-part {
+            position: absolute;
+            will-change: transform;
+            pointer-events: none;
+        }
+
+        /* --- PARTS --- */
+        #cat-tail { width: 200px; top: -20px; left: -100px; z-index: 1; transform-origin: 100% 50%; animation: tailWag 2.5s infinite ease-in-out; }
+        .cat-back-paw { width: 170px; z-index: 0; filter: brightness(0.8); }
+        #paw-back-left { top: 10px; left: -65px; transform-origin: top center; animation: pawMove1 1.5s infinite alternate ease-in-out 0.7s; }
+        #paw-back-right { top: 30px; left: -65px; transform-origin: top center; animation: pawMove2 1.3s infinite alternate ease-in-out 1s; }
+        #cat-body { width: 230px; top: -35px; left: -30px; z-index: 5; animation: bodyHover 4s infinite ease-in-out 0.5s; }
+        #cat-head { width: 230px; top: -45px; left: 50px; z-index: 10; transform-origin: center bottom; animation: headBob 3s infinite ease-in-out; }
+        .cat-front-paw { width: 160px; z-index: 6; }
+        #paw-front-left { top: 20px; left: 75px; transform-origin: top center; animation: pawMove1 1.2s infinite alternate ease-in-out; }
+        #paw-front-right { top: 35px; left: 75px; transform-origin: top center; animation: pawMove2 1.4s infinite alternate ease-in-out 0.3s; }
+
+        @keyframes tailWag { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(20deg); } }
+        @keyframes headBob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(4px) rotate(-3deg); } }
+        @keyframes bodyHover { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(2px) rotate(1deg); } }
+        @keyframes pawMove1 { 0%, 100% { transform: rotate(0deg) translateY(0); } 50% { transform: rotate(-10deg) translateY(-2px); } }
+        @keyframes pawMove2 { 0%, 100% { transform: rotate(0deg) translateY(0); } 50% { transform: rotate(8deg) translateY(-2px); } }
+
+        /* SPEECH BUBBLE */
+        .speech-bubble {
+            position: absolute;
+            top: -180px; 
+            left: 40%;
+            transform: translateX(-50%) scale(0.5);
+            background: white; color: black;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 1rem;
+            white-space: nowrap;
+            z-index: 200;
+        }
+        .speech-bubble.pop { 
+            opacity: 1; 
+            transform: translateX(-50%) scale(1); 
+            top: -200px; 
+        }
+
+        /* =========================================
+           📱 MOBILE RESPONSIVENESS
+           ========================================= */
+        @media (max-width: 600px) {
+            #tacocat-container {
+                transform: scale(1.1);
+                margin-left: 50px;     
+            }
+            #tacocat-container:active { transform: scale(1.05); }
+
+            #score-container {
+                margin-bottom: 100px; 
+            }
+            
+            #score-board {
+                font-size: 3.5rem; 
+            }
+
+            .speech-bubble {
+                top: -300px; 
+            }
+            .speech-bubble.pop { top: -250px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="score-container">
+        <div id="score-board">...</div>
+        <div class="subtitle">TACOCATACOCATACOCAT</div>
+    </div>
+
+    <div id="tacocat-container" onclick="clickCat()" ontouchstart="clickCat()">
+        <div id="bubble" class="speech-bubble">Meow!</div>
+        <img src="assets/3.png" class="cat-part" id="cat-tail">
+        <img src="assets/7.png" class="cat-part cat-back-paw" id="paw-back-left">
+        <img src="assets/6.png" class="cat-part cat-back-paw" id="paw-back-right">
+        <img src="assets/2.png" class="cat-part" id="cat-body">
+        <img src="assets/1.png" class="cat-part" id="cat-head">
+        <img src="assets/5.png" class="cat-part cat-front-paw" id="paw-front-left">
+        <img src="assets/4.png" class="cat-part cat-front-paw" id="paw-front-right">
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://plowkappobhtijindnds.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsb3drYXBwb2JodGlqaW5kbmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODAzNzEsImV4cCI6MjA4MjE1NjM3MX0.74LB8wzQhivYiSrWILiYX62AIbhe7NzvYk2KwnZIPEY';
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        const scoreDisplay = document.getElementById('score-board');
+        const bubble = document.getElementById('bubble');
+        let bubbleTimeout;
+        let currentScore = 0; 
+        let lastClickTime = 0; 
+
+        // 🔊 LOAD AUDIO
+        const tacoSound = new Audio('assets/taco.mp3');
+
+        async function fetchScore() {
+            const { data, error } = await supabaseClient
+                .from('global_clicks')
+                .select('count')
+                .eq('id', 1)
+                .single();
+
+            if (data) {
+                currentScore = data.count;
+                scoreDisplay.textContent = currentScore.toLocaleString();
+            }
+        }
+
+        async function clickCat(e) {
+            const now = Date.now();
+            if (now - lastClickTime < 50) return; 
+            lastClickTime = now;
+
+            // 🔊 PLAY SOUND (Clone node allows overlapping sounds)
+            const soundClone = tacoSound.cloneNode();
+            soundClone.volume = 0.5; // Optional: Lower volume slightly if it's too loud
+            soundClone.play().catch(e => console.log("Audio play blocked"));
+
+            currentScore++;
+            scoreDisplay.textContent = currentScore.toLocaleString();
+            showBubble();
+            spawnPhysicsTaco(); 
+
+            const { error } = await supabaseClient.rpc('increment_click');
+            if (error) console.error('Error clicking:', error);
+        }
+
+        function spawnPhysicsTaco() {
+            const taco = document.createElement('div');
+            taco.classList.add('taco');
+            document.body.appendChild(taco);
+
+            let x = window.innerWidth / 2 - 35; 
+            let y = window.innerHeight / 2 - 20;
+
+            let velocityY = -12 - Math.random() * 5; 
+            let velocityX = (Math.random() * 12) - 6; 
+            let gravity = 0.8;
+            let rotation = Math.random() * 360;
+            let rotationSpeed = (Math.random() * 10) - 5;
+
+            function update() {
+                velocityY += gravity;
+                x += velocityX;
+                y += velocityY;
+                rotation += rotationSpeed;
+
+                taco.style.left = x + 'px';
+                taco.style.top = y + 'px';
+                taco.style.transform = `rotate(${rotation}deg)`;
+
+                if (y < window.innerHeight + 100) {
+                    requestAnimationFrame(update);
+                } else {
+                    taco.remove();
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        supabaseClient
+            .channel('public:global_clicks')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'global_clicks' }, payload => {
+                currentScore = payload.new.count;
+                scoreDisplay.textContent = currentScore.toLocaleString();
+            })
+            .subscribe();
+
+        const phrases = ["Meow!", "Purr...", "Tasty!", "+1", "¡Muy bien!", "Nice!", "Wow!","Amazing!","Tacocat!","Cheesy!"];
+        function showBubble() {
+            const randomText = phrases[Math.floor(Math.random() * phrases.length)];
+            bubble.textContent = randomText;
+            bubble.classList.remove('pop'); 
+            void bubble.offsetWidth; 
+            bubble.classList.add('pop');
+            clearTimeout(bubbleTimeout);
+            bubbleTimeout = setTimeout(() => bubble.classList.remove('pop'), 500);
+        }
+
+        fetchScore();
+    </script>
+</body>
+</html>
